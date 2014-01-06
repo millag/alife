@@ -1,0 +1,80 @@
+implement:
+class Flock
+{
+    -reference to scene object
+    this is needed to query for near by obstacles and scene bounds
+
+    -list of boids belonging to the flock
+    scene has the responsibility to join boids to the apropriate flock
+    this is done via joinBoids()
+
+    -list of rules all boids in the flock will obey
+    the flock will be resposible to create those rules internally and pass them to the integrator
+    where the actual calculations of the new boid's velocity will take place
+
+    -integrator
+    object responsible for combining/integration over all the rules
+    Integrator class is made a friend of Flock so it can gain access to all boids,rules,obstacle manager
+    to avoid the need to initialize and update them individually
+
+    +joinBoids(iterator)
+    +update(deltaT)
+}
+
+
+class Integrator {
+friend class of Flock
+
+    +updateState(Flock& flock)
+}
+
+
+
+
+
+class Rule {
+   -weight
+
+   +getWeight();
+   +setWeight(weight);
+   +getForce(boid, neighbours)
+}
+
+Alignment : Rule
+Separation : Rule
+Cohesion :Rule
+
+
+geometry as geometry id in SceneObject !!!!
+gl matrices stack
+revise Stork classes again and consider making a factory instead
+
+
+TODO:
+place camera and light in meaningful pos
+changing the integrator should be easy with 1 line of code
+integrator part of the scene object
+
+break scene interface into different interfaces
+
+
+add dynamic creation of boids
+add obstacle avoidance as a separate rule may be ???
+need Waitress for obstacles providing quick managment
+add collision detection
+add target following
+add pray and predator
+add multithreading
+
+add skymap
+add load geometry from obj
+
+add loadScene form file
+
+make rule weigth/distance other parameters set as functions
+//TODO think of how give weight and distance as a function
+
+
+//QUESTION: virtual destructors - do I always need to specify virtual  or only on the top class in the hierarchy
+//QUESTION is there any difference in what scope you define the friendship
+//QUESTION: when using vector of pointers do I need to free the memory explicitly
