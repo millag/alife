@@ -16,28 +16,32 @@ SOURCES+= src/main.cpp \
 					src/OpenGLWindow.cpp \
     src/Scene.cpp \
     src/NGLWindow.cpp \
-    src/utils.cpp \
     src/Alife.cpp \
     src/Boid.cpp \
-    src/rules.cpp \
-    src/geometry.cpp \
-    src/flock.cpp \
-    src/integrator.cpp \
-    src/Stork.cpp
+    src/Mesh.cpp \
+    src/Utils.cpp \
+    src/Rules.cpp \
+    src/Integrator.cpp \
+    src/Flock.cpp \
+    src/Factory.cpp \
+    src/BaseObjects.cpp
 
 HEADERS+= include/OpenGLWindow.h \
     include/Scene.h \
     include/Renderer.h \
     include/NGLWindow.h \
-    include/utils.h \
     include/Alife.h \
     include/Boid.h \
     include/Obstacle.h \
-    include/geometry.h \
-    include/rules.h \
-    include/flock.h \
-    include/integrator.h \
-    include/Stork.h
+    include/Transform.h \
+    include/Mesh.h \
+    include/Utils.h \
+    include/Flock.h \
+    include/Integrator.h \
+    include/Rules.h \
+    include/Factory.h \
+    include/BaseObjects.h \
+    include/Servant.h
 INCLUDEPATH +=./include
 
 DESTDIR=./
