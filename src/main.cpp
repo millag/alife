@@ -1,5 +1,5 @@
-#include <QtGui/QGuiApplication>
 #include "Alife.h"
+#include <QtGui/QGuiApplication>
 
 #include <iostream>
 #include <Scene.h>

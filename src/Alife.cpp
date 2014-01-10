@@ -2,10 +2,10 @@
 
 #include <iostream>
 #include <QSurfaceFormat>
-#include "utils.h"
+#include "Utils.h"
 void initSurfaceContextFormat(QSurfaceFormat& _format);
 
-Alife::Alife(QObject *parent) : QObject(parent)
+Alife::Alife(QObject *_parent) : QObject(_parent)
 {
     m_scene = new Scene();
     m_window = new NGLWindow();
@@ -43,14 +43,14 @@ void Alife::go()
     m_window->resize(1024, 720);
     // and finally show
     m_window->show();
-    m_timer->start(utils::UPDATE_RATE);
+    m_timer->start(utils::c_updateRate);
 }
 
 void Alife::update()
 {
     std::cout << "UPDATE" << std::endl;
 //    TODO implement update
-    ngl::Real deltaT = 1.0 / utils::FPS;
+    ngl::Real deltaT = 1.0 / utils::c_fps;
     m_scene->update(deltaT);
     // re-draw GL
     m_window->renderLater();

@@ -1,4 +1,4 @@
-#include "utils.h"
+#include "Utils.h"
 #include <cstdlib>
 
 template<class T>
@@ -20,7 +20,7 @@ ngl::Vec4 utils::genRandPointInSphere(ngl::Real _radius, const ngl::Vec4& _cente
 {
 //    TODO generate with uniform distribution
     ngl::Vec4 v = genRandPointInBox();
-    if (v.lengthSquared() == 0)
+    if (v.lengthSquared() < c_err)
         return _center;
 
     v.normalize();
@@ -32,4 +32,28 @@ ngl::Vec4 utils::genRandPointInSphere(ngl::Real _radius, const ngl::Vec4& _cente
 ngl::Real utils::getSign(ngl::Real _value)
 {
     return (_value < 0)? -1 : 1;
+}
+
+void utils::truncate(ngl::Vec4& io_v, ngl::Real _maxLength)
+{
+    if (io_v.lengthSquared() > _maxLength * _maxLength)
+    {
+        io_v.normalize();
+        io_v *= _maxLength;
+    }
+}
+
+bool utils::isInsideVolume(const ngl::Vec4& _p, const AABB& _volume)
+{
+    ngl::Vec4 v = _p - _volume.getBottomLeft();
+    if ( v.m_x < 0 || v.m_y < 0 || v.m_z < 0)
+    {
+        return false;
+    }
+    v = _volume.getTopRight() - _p;
+    if ( v.m_x < 0 || v.m_y < 0 || v.m_z < 0)
+    {
+        return false;
+    }
+    return true;
 }

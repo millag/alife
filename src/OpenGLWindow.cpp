@@ -4,14 +4,11 @@
  * adapted to use NGL
  */
 
-
 #include "OpenGLWindow.h"
+#include <iostream>
 #include <QtCore/QCoreApplication>
 #include <QtGui/QOpenGLPaintDevice>
 #include <QtGui/QPainter>
-#include <iostream>
-
-
 
 OpenGLWindow::OpenGLWindow(QWindow *_parent)
     : QWindow(_parent)
@@ -101,5 +98,3 @@ void OpenGLWindow::renderNow()
   // finally swap the buffers to make visible
   m_context->swapBuffers(this);
 }
-
-

@@ -1,12 +1,12 @@
 #include "NGLWindow.h"
 
-#include <ngl/Camera.h>
-#include <ngl/Light.h>
-#include <ngl/TransformStack.h>
-#include <ngl/Material.h>
-#include <ngl/NGLInit.h>
-#include <ngl/VAOPrimitives.h>
-#include <ngl/ShaderLib.h>
+#include "ngl/Camera.h"
+#include "ngl/Light.h"
+#include "ngl/TransformStack.h"
+#include "ngl/Material.h"
+#include "ngl/NGLInit.h"
+#include "ngl/VAOPrimitives.h"
+#include "ngl/ShaderLib.h"
 
 #include <QMouseEvent>
 #include <QGuiApplication>
@@ -71,10 +71,10 @@ void NGLWindow::buildVAOs()
 {
     assert(m_VAOList.size() == 0);
 
-    std::vector<Mesh*> geomList = m_scene->getMeshList();
-    m_VAOList.resize(geomList.size(), NULL);
+    std::vector<Mesh*> meshList = m_scene->getMeshes();
+    m_VAOList.resize(meshList.size(), NULL);
     unsigned i = 0;
-    for (std::vector<Mesh*>::const_iterator it = geomList.begin(); it != geomList.end(); ++it)
+    for (std::vector<Mesh*>::const_iterator it = meshList.begin(); it != meshList.end(); ++it)
     {
         if ((*it)->getNFaces() == 0)
         {
@@ -89,30 +89,34 @@ void NGLWindow::buildVAOs()
     }
 }
 
-void NGLWindow::feedVAO(const Mesh* _geometry, ngl::VertexArrayObject& vao)
+void NGLWindow::feedVAO(const Mesh* _mesh, ngl::VertexArrayObject& o_vao)
 {
-    vao.bind();
+    o_vao.bind();
     // in this case we are going to set our data as the vertices above
     // now we set the attribute pointer to be 0 (as this matches vertIn in our shader)
-    vao.setIndexedData(_geometry->m_vertices.size() * sizeof(ngl::Vec4),
-                        _geometry->m_vertices[0].m_x,
-                        _geometry->m_vindices.size(),
-                        &_geometry->m_vindices[0],
+    const std::vector<ngl::Vec4>& v = _mesh->getVertices();
+    const std::vector<unsigned>& vi = _mesh->getVIndices();
+    o_vao.setIndexedData(v.size() * sizeof(ngl::Vec4),
+                        v[0].m_x,
+                        vi.size(),
+                        &vi[0],
                         GL_UNSIGNED_INT);
 
-    vao.setVertexAttributePointer(0,4,GL_FLOAT,0,0);
+    o_vao.setVertexAttributePointer(0,4,GL_FLOAT,0,0);
 
     // now we set the attribute pointer to be 0 (as this matches vertIn in our shader)
-    vao.setIndexedData(_geometry->m_normals.size() * sizeof(ngl::Vec4),
-                        _geometry->m_normals[0].m_x,
-                        _geometry->m_nindices.size(),
-                        &_geometry->m_nindices[0],
+    const std::vector<ngl::Vec4>& vn = _mesh->getNormals();
+    const std::vector<unsigned>& vni = _mesh->getNIndices();
+    o_vao.setIndexedData(vn.size() * sizeof(ngl::Vec4),
+                        vn[0].m_x,
+                        vni.size(),
+                        &vni[0],
                         GL_UNSIGNED_INT);
-    vao.setVertexAttributePointer(2,4,GL_FLOAT,0,0);
-    vao.setNumIndices(_geometry->m_vindices.size());
+    o_vao.setVertexAttributePointer(2,4,GL_FLOAT,0,0);
+    o_vao.setNumIndices(vi.size());
 
     // now unbind
-    vao.unbind();
+    o_vao.unbind();
 }
 
 void NGLWindow::initialize()
@@ -227,19 +231,19 @@ void NGLWindow::render()
     // draw
     loadMatricesToShader();
 
-    const std::vector<SceneObject*>& soList = m_scene->getSceneObjectList();
-    typedef std::vector<SceneObject*>::const_iterator SOIter;
-    for (SOIter it = soList.begin(); it != soList.end(); ++it)
+    const std::vector<RenderObject*>& roList = m_scene->getRenderObjects();
+    typedef std::vector<RenderObject*>::const_iterator ROIter;
+    for (ROIter it = roList.begin(); it != roList.end(); ++it)
     {
-        SceneObject* so = (*it);
+        RenderObject* ro = (*it);
         m_transformStack.pushTransform();
         {
 //            place object in world
-            m_transformStack.setCurrent(so->getTransform());
+            m_transformStack.setCurrent(ro->getTransform());
             loadMatricesToShader();
 
 //            actual draw
-            ngl::VertexArrayObject* vao =  m_VAOList.at(so->getMeshId());
+            ngl::VertexArrayObject* vao =  m_VAOList.at(ro->getMeshId());
             if (vao == NULL)
             {
                 continue;

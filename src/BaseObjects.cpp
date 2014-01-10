@@ -1,133 +1,126 @@
-#include "geometry.h"
-#include <ngl/Util.h>
+#include "BaseObjects.h"
+#include "ngl/Util.h"
+#include "Utils.h"
 
-unsigned Mesh::getNFaces() const
+
+
+RenderObject::RenderObject():m_mesh(NULL),m_shaderId(-1),m_boundingRadius(0)
+{ }
+
+RenderObject::RenderObject(const Mesh* _mesh, int _shaderId, const ngl::Transformation& _transform):
+    m_mesh(_mesh),m_transform(_transform),m_shaderId(_shaderId)
 {
-    return (m_vindices.size() / 3);
+    calcBoundingRadius();
 }
 
-unsigned Mesh::getNVertices() const
+RenderObject::~RenderObject() { }
+
+unsigned RenderObject::getMeshId() const
 {
-    return (m_vertices.size());
+    assert(m_mesh != NULL);
+    return m_mesh->getId();
 }
 
-//TODO: mode is ignored for now - FLAT assumed
-//QUESTION: check if normal index array should be the same as the vertex index array, probably this is NGL specific WTF??
-void Mesh::computeNormals(Mesh::SHADING_MODE _mode)
+const Mesh* RenderObject::getMesh() const
 {
-    m_normals.resize(m_vindices.size());
+    return m_mesh;
+}
 
-    unsigned i  = 0;
-    typedef std::vector<unsigned>::const_iterator ULIter;
-    for (ULIter it = m_vindices.begin(); it != m_vindices.end(); it += 3)
+void RenderObject::setMesh(const Mesh* _mesh)
+{
+    m_mesh = _mesh;
+    calcBoundingRadius();
+}
+
+void RenderObject::setTransform(const ngl::Transformation& _transform)
+{
+    m_transform = _transform;
+    calcBoundingRadius();
+}
+
+//void RenderObject::lookAt(const ngl::Vec4 &_at, const ngl::Vec4 &_up)
+//{
+//    const ngl::Vec4& t = m_transform.getPosition();
+//    ngl::Vec4 zaxis = _at - t;
+//    zaxis.normalize();
+//    ngl::Vec4 xaxis = _up.cross(zaxis);
+//    xaxis.normalize();
+//    ngl::Vec4 yaxis = zaxis.cross(xaxis);
+//    yaxis.normalize();
+//    zaxis *= -1.0;
+//    ngl::Mat4 m(xaxis.m_x, xaxis.m_y, xaxis.m_z, 0,
+//                yaxis.m_x, yaxis.m_y, yaxis.m_z, 0,
+//                zaxis.m_x, zaxis.m_y, zaxis.m_z, 0,
+//                    t.m_x,     t.m_y,     t.m_z, 1);
+//    m_transform.setMatrix(m);
+//}
+
+
+// FIX:: following calculations are wrong when applying shear to the object
+void RenderObject::calcBoundingRadius()
+{
+    if (!m_mesh || !m_mesh->getBoundingRadius())
     {
-        m_normals[3*i] = ngl::calcNormal( m_vertices[ *(it) ], m_vertices[ *(it + 2) ], m_vertices[ *(it + 1) ] );
-        m_normals[3*i + 1] = m_normals[3*i];
-        m_normals[3*i + 2] = m_normals[3*i];
-        ++i;
+        m_boundingRadius = 0;
+        return;
     }
-    m_nindices.resize(m_vindices.size());
-    m_nindices.insert(m_nindices.begin(), m_vindices.begin(), m_vindices.end());
+
+    const ngl::Mat4& transform = m_transform.getMatrix();
+    ngl::Vec4 rx =  transform * (utils::c_ex  * m_mesh->getBoundingRadius());
+    ngl::Vec4 ry =  transform * (utils::c_ey  * m_mesh->getBoundingRadius());
+    ngl::Vec4 rz =  transform * (utils::c_ez  * m_mesh->getBoundingRadius());
+
+    m_boundingRadius = std::sqrt(std::max(rx.lengthSquared(), std::max(ry.lengthSquared(), rz.lengthSquared())));
 }
 
-SceneObject::SceneObject(int _meshId, const ngl::Transformation& _transform):
-    m_meshId(_meshId),m_transform(_transform)
-{ }
 
-SceneObject::SceneObject(const SceneObject& _so):
-    m_meshId(_so.m_meshId),m_transform(_so.m_transform)
-{ }
 
-SceneObject::~SceneObject() { }
-
-int SceneObject::getMeshId() const
+MovingObject::MovingObject(const Mesh *_mesh, int _shaderId, const ngl::Transformation &_transform):
+    RenderObject(_mesh, _shaderId, _transform)
 {
-    return m_meshId;
+    m_headingDir = m_transform.getMatrix().getForwardVector();
+    m_headingDir.normalize();
+
+    m_maxSpeedSqr = m_maxSpeed = 0;
+    m_maxTurningAngle = 0;
+    m_mass = 1.0;
 }
 
-void SceneObject::setMeshId(int _meshId)
+
+ngl::Vec4 MovingObject::getHeadingDir() const
 {
-    m_meshId = _meshId;
+    return m_headingDir;
 }
 
-const ngl::Vec4& SceneObject::getPosition() const
+void MovingObject::setVelocity(const ngl::Vec4 &_v)
 {
-    return m_transform.getPosition();
+    m_velocity = _v;
+    utils::truncate(m_velocity, m_maxSpeed);
 }
 
-void SceneObject::setPosition(const ngl::Vec4 &_p)
+void MovingObject::update(ngl::Real _deltaT)
 {
-    m_transform.setPosition(_p);
+    if (m_acceleration.lengthSquared() < utils::c_err && m_velocity.lengthSquared() < utils::c_err)
+    {
+        return;
+    }
+    m_velocity += m_acceleration * _deltaT;
+    utils::truncate(m_velocity, m_maxSpeed);
+//    m_transform.setPosition( m_transform.getPosition() + m_velocity * _deltaT);
+    m_transform.addPosition( m_velocity * _deltaT);
+    updateHeading();
 }
 
-const ngl::Transformation& SceneObject::getTransform() const
+void MovingObject::updateHeading()
 {
-    return m_transform;
-}
+    if ( m_velocity.lengthSquared() < utils::c_err)
+    {
+        return;
+    }
 
-void SceneObject::lookAt(const ngl::Vec4 &_at, const ngl::Vec4 &_up)
-{
-    const ngl::Vec4& t = m_transform.getPosition();
-    ngl::Vec4 zaxis = _at - t;
-    zaxis.normalize();
-    ngl::Vec4 xaxis = _up.cross(zaxis);
-    xaxis.normalize();
-    ngl::Vec4 yaxis = zaxis.cross(xaxis);
-    yaxis.normalize();
-    zaxis *= -1.0;
-    ngl::Mat4 m(xaxis.m_x, xaxis.m_y, xaxis.m_z, 0,
-                yaxis.m_x, yaxis.m_y, yaxis.m_z, 0,
-                zaxis.m_x, zaxis.m_y, zaxis.m_z, 0,
-                    t.m_x,     t.m_y,     t.m_z, 1);
-    m_transform.setMatrix(m);
-}
+    m_headingDir = m_velocity;
+    m_headingDir.normalize();
 
-BoidMesh::BoidMesh():Mesh()
-{
-    ngl::Vec4 v[] = {
-                         ngl::Vec4(0,   1, 1),
-                         ngl::Vec4(0,   0,-1),
-                         ngl::Vec4(-0.5,0, 1),
-
-                         ngl::Vec4(0,   1, 1),
-                         ngl::Vec4(0,   0,-1),
-                         ngl::Vec4(0.5, 0, 1),
-
-                         ngl::Vec4(0,   1, 1),
-                         ngl::Vec4(0,   0, 1.5),
-                         ngl::Vec4(-0.5,0, 1),
-
-                         ngl::Vec4(0,   1, 1),
-                         ngl::Vec4(0,   0, 1.5),
-                         ngl::Vec4(0.5, 0, 1)
-                    };
-    unsigned vi[] = {0,1,2,5,4,3,8,7,6,9,10,11};
-    m_vertices.insert(m_vertices.begin(), v, v + 12);
-    m_vindices.insert(m_vindices.begin(), vi, vi + 12);
-    computeNormals( FLAT );
-}
-
-ObstacleMesh::ObstacleMesh():Mesh()
-{
-    ngl::Vec4 v[] = {
-                         ngl::Vec4(0,   1, 1),
-                         ngl::Vec4(0,   0,-1),
-                         ngl::Vec4(-0.5,0, 1),
-
-                         ngl::Vec4(0,   1, 1),
-                         ngl::Vec4(0,   0,-1),
-                         ngl::Vec4(0.5, 0, 1),
-
-                         ngl::Vec4(0,   1, 1),
-                         ngl::Vec4(0,   0, 1.5),
-                         ngl::Vec4(-0.5,0, 1),
-
-                         ngl::Vec4(0,   1, 1),
-                         ngl::Vec4(0,   0, 1.5),
-                         ngl::Vec4(0.5, 0, 1)
-                    };
-    unsigned vi[] = {0,1,2,5,4,3,8,7,6,9,10,11};
-    m_vertices.insert(m_vertices.begin(), v, v + 12);
-    m_vindices.insert(m_vindices.begin(), vi, vi + 12);
-    computeNormals( FLAT );
+//    TODO set new orientation
+//    TODO: update parent cell in acc grid
 }

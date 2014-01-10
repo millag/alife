@@ -2,18 +2,20 @@
 #define FLOCK_H
 
 #include "Scene.h"
-#include "integrator.h"
+#include "Integrator.h"
+#include "Servant.h"
 
-class Flock
+class Flock : public INeighboursServant
 {
 public:
     Flock(const Scene& _scene);
     virtual ~Flock();
 
     bool isInFlock(const Boid* _boid) const;
-    void findNeighboursWithinDistance(const Boid* _boid, ngl::Real _distance, std::vector<Boid *> &o_neighbours) const;
     void joinBoid(Boid* _boid);
     void update(ngl::Real _deltaT);
+
+    const std::vector<Boid*>& getNeighbours(const Boid* _boid) { return m_neighbours; }
 
 protected:
 //    reference to scene object
@@ -27,7 +29,10 @@ protected:
     std::vector<Rule*> m_rules;
     ngl::Real m_maxSpeed;
 
+    std::vector<Boid*> m_neighbours;
+
     void initialize();
+    void findNeighbours(const Boid *_boid, std::vector<Boid *> &o_neighbours) const;
 private:
     Flock();
 };

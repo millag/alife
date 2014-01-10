@@ -3,11 +3,11 @@
 
 #include "OpenGLWindow.h"
 
-#include <ngl/Camera.h>
-#include <ngl/Colour.h>
-#include <ngl/Light.h>
-#include <ngl/TransformStack.h>
-#include <ngl/Text.h>
+#include "ngl/Camera.h"
+#include "ngl/Colour.h"
+#include "ngl/Light.h"
+#include "ngl/TransformStack.h"
+#include "ngl/Text.h"
 
 #include "Scene.h"
 
@@ -154,7 +154,7 @@ private:
 
     void buildVAOs();
 
-    void feedVAO(const Mesh* _geometry, ngl::VertexArrayObject& vao);
+    void feedVAO(const Mesh* _mesh, ngl::VertexArrayObject& o_vao);
 };
 
 

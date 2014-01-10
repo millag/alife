@@ -4,10 +4,10 @@
 #include <string>
 #include <vector>
 
-#include <ngl/Light.h>
-#include <ngl/Camera.h>
+#include "ngl/Light.h"
+#include "ngl/Camera.h"
 
-#include "geometry.h"
+#include "BaseObjects.h"
 //QUESTION: what to do when there is cycle with include headers
 //FIX: Scene interface needs to be break apart so different object have only part of its interface that concerns them
 class Flock;
@@ -22,15 +22,15 @@ public:
 
     const ngl::Light* getLight() const;
     ngl::Camera *getCamera();
-    const std::vector<SceneObject*>& getSceneObjectList() const;
-    const std::vector<Mesh*>& getMeshList() const;
+    const std::vector<RenderObject*>& getRenderObjects() const;
+    const std::vector<Mesh*>& getMeshes() const;
 
 private:
     ngl::Light* m_light;
     ngl::Camera* m_camera;
     std::vector<Flock*> m_flocks;
 
-    std::vector<SceneObject*> m_sceneObjects;
+    std::vector<RenderObject*> m_renderObjects;
     std::vector<Mesh*> m_meshes;
 };
 

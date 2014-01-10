@@ -9,7 +9,7 @@ class Alife : public QObject
 {
     Q_OBJECT
 public:
-    explicit Alife(QObject *parent = 0);
+    explicit Alife(QObject *_parent = 0);
     ~Alife();
 
     void initialize();

@@ -1,14 +1,14 @@
 #include "Scene.h"
-#include "Stork.h"
+#include "Factory.h"
 #include "Obstacle.h"
-#include "flock.h"
+#include "Flock.h"
 
 Scene::Scene() { }
 
 Scene::~Scene()
 {
-    Stork::unregisterSpecies("boid");
-    Stork::unregisterSpecies("obstacle");
+    RenderObjectFactory::sUnregisterObject("boid");
+    RenderObjectFactory::sUnregisterObject("obstacle");
 
     delete m_camera;
     delete m_light;
@@ -19,8 +19,8 @@ Scene::~Scene()
         delete (*it);
     }
 //    delete scene objects
-    typedef std::vector<SceneObject*>::const_iterator SOIter;
-    for (SOIter it = m_sceneObjects.begin(); it != m_sceneObjects.end(); ++it) {
+    typedef std::vector<RenderObject*>::const_iterator ROIter;
+    for (ROIter it = m_renderObjects.begin(); it != m_renderObjects.end(); ++it) {
         delete (*it);
     }
 //    delete geometry
@@ -47,22 +47,23 @@ void Scene::initialize()
     m_light = new ngl::Light(ngl::Vec3(0,1,0),ngl::Colour(1,1,1,1),ngl::Colour(1,1,1,1),ngl::POINTLIGHT);
     m_light->setTransform(iv);
 
-    Stork::registerSpecies("boid", Boid::create);
-    Stork::registerSpecies("obstacle", Obstacle::create);
+    RenderObjectFactory::sRegisterObject("boid", Boid::sCreate);
+    RenderObjectFactory::sRegisterObject("obstacle", Obstacle::sCreate);
 
     Flock* flock = new Flock(*this);
     m_flocks.push_back(flock);
 
-    Mesh* geom = new BoidMesh();
-    m_meshes.push_back(geom);
-    int meshId = m_meshes.size() - 1;
+    //FIX
+    int meshId = m_meshes.size();
+    Mesh* mesh = new BoidMesh(meshId);
+    m_meshes.push_back(mesh);
 
     unsigned nBoids = 10;
-    m_sceneObjects.resize(nBoids, NULL);
-    for (unsigned i = 0; i < m_sceneObjects.size(); ++i)
+    m_renderObjects.resize(nBoids, NULL);
+    for (unsigned i = 0; i < m_renderObjects.size(); ++i)
     {
-        Boid* boid = (Boid*)Stork::deliverBaby("boid", meshId);
-        m_sceneObjects[i] = boid;
+        Boid* boid = (Boid*)RenderObjectFactory::sCreateObject("boid", mesh);
+        m_renderObjects[i] = boid;
         flock->joinBoid(boid);
     }
 }
@@ -77,12 +78,12 @@ void Scene::update(ngl::Real _deltaT)
     }
 }
 
-const std::vector<SceneObject*>& Scene::getSceneObjectList() const
+const std::vector<RenderObject *> &Scene::getRenderObjects() const
 {
-    return m_sceneObjects;
+    return m_renderObjects;
 }
 
-const std::vector<Mesh*>& Scene::getMeshList() const
+const std::vector<Mesh*>& Scene::getMeshes() const
 {
     return m_meshes;
 }

@@ -1,112 +1,65 @@
 #include "Boid.h"
-#include <ngl/Util.h>
+#include "ngl/Util.h"
 
-Boid::Boid(int _meshId, const ngl::Transformation &_transform):
-    SceneObject(_meshId, _transform),
-    m_maxSpeedSqr(1.0),m_mass(1.0),
-    m_neighbourhoodSqrDistance(4.0),m_neighbourhoodAngle(ngl::PI)
-{ }
-
-Boid::Boid(const Boid &_boid):SceneObject(_boid)
+Boid::Boid(const Mesh *_mesh, int _shaderId, const ngl::Transformation &_transform):
+    MovingObject(_mesh, _shaderId, _transform)
 {
-    m_maxSpeedSqr = _boid.m_maxSpeedSqr;
-    m_velocity = _boid.m_velocity;
-    m_neighbourhoodSqrDistance = _boid.m_neighbourhoodSqrDistance;
-    m_neighbourhoodAngle = _boid.m_neighbourhoodAngle;
+    m_neighbourhoodDist = (m_mesh == NULL)? 0 : m_mesh->getBoundingRadius();
+    m_neighbourhoodFOV = 0;
+    m_panicDist = (m_mesh == NULL)? 0 : m_mesh->getBoundingRadius();
+    m_obstacleLookupDist = (m_mesh == NULL)? 0 : m_mesh->getBoundingRadius();
 }
 
 Boid::~Boid() { }
 
-
-ngl::Real Boid::getMaxSpeed() const
+void Boid::setNeighbourhoodDistance(ngl::Real _d)
 {
-    return sqrt(m_maxSpeedSqr);
+    assert(_d >= 0);
+    m_neighbourhoodDist = _d + ((m_mesh == NULL)? 0 : m_mesh->getBoundingRadius());
 }
 
-void Boid::setMaxSpeed(const ngl::Real& _maxSpeed)
+void Boid::setPanicDistance(ngl::Real _d)
 {
-    m_maxSpeedSqr = _maxSpeed * _maxSpeed;
+    assert(_d >= 0);
+    m_panicDist = _d + ((m_mesh == NULL)? 0 : m_mesh->getBoundingRadius());
 }
 
-ngl::Vec4 Boid::getDirection() const
+void Boid::setObstacleLookupDistance(ngl::Real _d)
 {
-    return (m_velocity / m_velocity.length());
+    assert(_d >= 0);
+    m_obstacleLookupDist = _d + ((m_mesh == NULL)? 0 : m_mesh->getBoundingRadius());
 }
 
-const ngl::Vec4 &Boid::getVelocity() const
+bool Boid::isInNeighbourhood(const RenderObject &_so) const
 {
-    return m_velocity;
-}
-
-void Boid::setVelocity(const ngl::Vec4 &v)
-{
-    m_velocity = v;
-    if (m_velocity.lengthSquared() == 0)
-        return;
-
-    if (m_velocity.lengthSquared() > m_maxSpeedSqr)
-    {
-        m_velocity.normalize();
-        m_velocity *= sqrt(m_maxSpeedSqr);
-    }
-
-    lookAt(m_velocity, utils::ey);
-}
-
-ngl::Real Boid::getMass() const
-{
-    return m_mass;
-}
-
-void  Boid::setMass(const ngl::Real& _mass)
-{
-    m_mass = _mass;
-}
-
-ngl::Real Boid::getNeighbourhoodDistance() const
-{
-    return sqrt(m_neighbourhoodSqrDistance);
-}
-
-ngl::Real Boid::getNeighbourhoodAngle() const
-{
-    return m_neighbourhoodAngle;
-}
-
-bool Boid::isInNeighbourhood(const SceneObject& _object) const
-{
-    ngl::Real dist = getSqrDistanceToObject(_object);
-
-    return (dist < m_neighbourhoodSqrDistance);
-}
-
-ngl::Real Boid::getSqrDistanceToObject(const SceneObject& _object) const
-{
-    ngl::Vec4 dir = _object.getPosition() - getPosition();
-    ngl::Real sqrDist = dir.lengthSquared();
-    if (sqrDist == 0)
-        return sqrDist;
+    ngl::Vec4 dir = _so.getPosition() - getPosition();
+    ngl::Real distSqr = dir.lengthSquared();
+    if (distSqr == 0)
+        return true;
 
     dir.normalize();
-
-    return ((getDirection().dot(dir) > cos(m_neighbourhoodAngle))? sqrDist : INFINITY );
+    return (distSqr <= getNeighbourhoodDistanceSqr()) && (getHeadingDir().dot(dir) > cos(m_neighbourhoodFOV));
 }
 
-void Boid::update(ngl::Real _deltaT)
-{
-    m_transform.addPosition(_deltaT * m_velocity );
-}
-
-
-SceneObject *Boid::create(int _meshId)
+RenderObject *Boid::sCreate(const Mesh *_mesh)
 {
         ngl::Transformation t;
         t.setPosition(utils::genRandPointInBox(-5.0, 5.0));
 
-        Boid* boid = new Boid(_meshId, t);
-        ngl::Vec4 v = utils::genRandPointInSphere(0.5);
-        boid->setVelocity( v + v * (0.5 / v.length()));
+        Boid* boid = new Boid(_mesh, -1, t);
+        ngl::Vec4 v = utils::genRandPointInSphere(1.0);
+//        ngl::Vec4 v(1.0,0,0);
+        boid->setMaxSpeed(1.0);
+        boid->setMaxTurningAngle(ngl::PI);
+        boid->setMass(1.0);
+        boid->setVelocity(v);
+
+        boid->setNeighbourhoodDistance(15.0);
+        boid->setNeighbourhoodFOV(ngl::PI);
+        boid->setPanicDistance(1.0);
+        boid->setObstacleLookupDistance(4.0);
         return boid;
+
 //        ngl::Transformation t;
 //        t.setPosition(ngl::Vec4());
 
@@ -114,4 +67,10 @@ SceneObject *Boid::create(int _meshId)
 //        ngl::Vec4 v(utils::ex);
 //        boid->setVelocity( v + v * (0.5 / v.length()));
 //        return boid;
+}
+
+
+void Boid::update(ngl::Real _deltaT)
+{
+    MovingObject::update(_deltaT);
 }

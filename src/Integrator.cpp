@@ -1,14 +1,14 @@
-#include "integrator.h"
+#include "Integrator.h"
 
-ngl::Vec4 Integrator::calculateAcceleration(const std::vector<Rule*>& _rules, const Boid* _boid,const std::vector<Boid *>& _neighbours) const
+ngl::Vec4 Integrator::calculateAcceleration(const Boid* _boid, const std::vector<ngl::Vec4>& _forces, ngl::Real _deltaT) const
 {
-    ngl::Vec4 acceleration;
-    typedef std::vector<Rule*>::const_iterator RIter;
-    for (RIter rit = _rules.begin(); rit != _rules.end(); ++rit)
+    ngl::Vec4 acc;
+    typedef std::vector<ngl::Vec4>::const_iterator VIter;
+    for (VIter it = _forces.begin(); it != _forces.end(); ++it)
     {
-        Rule* rule = (*rit);
-        acceleration += rule->getForce(_boid, _neighbours) / _boid->getMass();
+        acc += (*it);
     }
 
-    return acceleration;
+    acc /= _boid->getMass();
+    return acc;
 }

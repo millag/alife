@@ -1,28 +1,28 @@
-#include "Stork.h"
+#include "Factory.h"
 
 #include "Boid.h"
 #include "Obstacle.h"
-#include "utils.h"
+#include "Utils.h"
 
-// instantiate the static variable in RendererFactory
-std::map<std::string, Stork::createCallback> Stork::m_storks;
+// instantiate the static variable in SceneObjectFactory
+std::map<std::string, RenderObjectFactory::createCallback> RenderObjectFactory::sObjects;
 
-void Stork::registerSpecies(const std::string &type, createCallback cb)
+void RenderObjectFactory::sRegisterObject(const std::string &_type, createCallback _cb)
 {
-    m_storks[type] = cb;
+    sObjects[_type] = _cb;
 }
 
-void Stork::unregisterSpecies(const std::string &type)
+void RenderObjectFactory::sUnregisterObject(const std::string &_type)
 {
-    m_storks.erase(type);
+    sObjects.erase(_type);
 }
 
-SceneObject *Stork::deliverBaby(const std::string &type, int id)
+RenderObject *RenderObjectFactory::sCreateObject(const std::string &_type, const Mesh *_mesh)
 {
-    std::map<std::string, createCallback>::iterator it = m_storks.find(type);
-    if (it == m_storks.end())
+    std::map<std::string, createCallback>::iterator it = sObjects.find(_type);
+    if (it == sObjects.end())
         return NULL;
 
     // call the creation callback to construct this derived type
-    return (it->second)(id);
+    return (it->second)(_mesh);
 }

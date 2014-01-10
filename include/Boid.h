@@ -1,50 +1,42 @@
 #ifndef BOID_H
 #define BOID_H
 
-#include "utils.h"
-#include "geometry.h"
+#include "Utils.h"
+#include "BaseObjects.h"
 
-class Boid : public SceneObject
+class Boid : public MovingObject
 {
 public:
-    Boid(int _meshId = -1, const ngl::Transformation& _transform = ngl::Transformation());
-    Boid(const Boid& _boid);
-
+    Boid(const Mesh* _mesh, int _shaderId, const ngl::Transformation& _transform = ngl::Transformation());
     virtual ~Boid();
 
-    ngl::Real getNeighbourhoodDistance() const;
-    ngl::Real getNeighbourhoodAngle() const;
+    ngl::Real getNeighbourhoodDistance() const { return m_neighbourhoodDist; }
+    ngl::Real getNeighbourhoodDistanceSqr() const { return m_neighbourhoodDist * m_neighbourhoodDist; }
+    void setNeighbourhoodDistance(ngl::Real _d);
 
-    ngl::Real getMaxSpeed() const;
-    void  setMaxSpeed(const ngl::Real& _maxSpeed);
+    ngl::Real getNeighbourhoodFOV() const { return m_neighbourhoodFOV; }
+    void setNeighbourhoodFOV(ngl::Real _fov) { m_neighbourhoodFOV = _fov; }
 
+    ngl::Real getPanicDistance() const { return m_panicDist; }
+    ngl::Real getPanicDistanceSqr() const { return m_panicDist * m_panicDist; }
+    void setPanicDistance(ngl::Real _d);
 
-    ngl::Vec4 getDirection() const;
-    const ngl::Vec4& getVelocity() const;
-    void setVelocity(const ngl::Vec4& v);
+    ngl::Real getObstacleLookupDistance() const { return m_obstacleLookupDist; }
+    ngl::Real getObstacleLookupDistanceSqr() const { return m_obstacleLookupDist * m_obstacleLookupDist; }
+    void setObstacleLookupDistance(ngl::Real _d);
 
-    ngl::Real getMass() const;
-    void  setMass(const ngl::Real& _mass);
+    bool isInNeighbourhood(const RenderObject& _so) const;
 
-//    returns the distance to the object if within boid's field of view, otherwise INFINITY
-    ngl::Real getSqrDistanceToObject(const SceneObject& _object) const;
-    bool isInNeighbourhood(const SceneObject& _object) const;
+    static RenderObject *sCreate(const Mesh* _mesh);
 
-//    update the boid's current position according to current velocity
-    void update(ngl::Real _deltaT);
-
-    static SceneObject* create(int _meshId);
+    virtual void update(ngl::Real _deltaT);
 
 protected:
-
-//    speed measured in units per sec
-    ngl::Real m_maxSpeedSqr;
-//    current sped is the length of velocity vec
-    ngl::Vec4 m_velocity;
-    ngl::Real m_mass;
-    ngl::Real m_neighbourhoodSqrDistance;
+    ngl::Real m_neighbourhoodDist;
 //    measured in radians
-    ngl::Real m_neighbourhoodAngle;
+    ngl::Real m_neighbourhoodFOV;
+    ngl::Real m_panicDist;
+    ngl::Real m_obstacleLookupDist;
 };
 
 #endif // BOID_H

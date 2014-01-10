@@ -1,28 +1,31 @@
 #ifndef OBSTACLE_H
 #define OBSTACLE_H
 
-#include "geometry.h"
-#include "utils.h"
+#include "BaseObjects.h"
+#include "Utils.h"
 
-class Obstacle : public SceneObject
+class Obstacle : public MovingObject
 {
 public:
-    Obstacle(int _meshId = -1, const ngl::Transformation& _transform = ngl::Transformation()):
-        SceneObject(_meshId, _transform)
+    Obstacle(const Mesh* _mesh, int _shaderId, const ngl::Transformation& _transform = ngl::Transformation()):
+        MovingObject(_mesh, _shaderId, _transform)
     { }
 
     Obstacle(const Obstacle& _obstacle):
-        SceneObject(_obstacle)
+        MovingObject(_obstacle)
     { }
 
     ~Obstacle() { }
 
-    static SceneObject* create(int _meshId)
+    void update(ngl::Real _deltaT)
+    { }
+
+    static RenderObject* sCreate(const Mesh* _mesh)
     {
         ngl::Transformation t;
         t.setPosition(utils::genRandPointInBox(10.0, 10.0));
 
-        return new Obstacle(_meshId, t);
+        return new Obstacle(_mesh, -1, t);
     }
 };
 
