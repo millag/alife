@@ -19,6 +19,10 @@ ngl::Vec4 Seek::getForce(const Boid *_boid)
 {
     ngl::Vec4 steerForce = m_target - _boid->getPosition();
     steerForce.m_w = 0;
+    if (steerForce.lengthSquared() < utils::C_ERR)
+    {
+        return steerForce;
+    }
     ngl::Real weight = calcWeight(_boid, steerForce);
     steerForce.normalize();
     return  steerForce * _boid->getMaxSpeed() * weight * m_weight;
@@ -35,6 +39,11 @@ ngl::Vec4 Flee::getForce(const Boid *_boid)
 {
     ngl::Vec4 steerForce = _boid->getPosition() - m_target;
     steerForce.m_w = 0;
+    if (steerForce.lengthSquared() < utils::C_ERR)
+    {
+        return utils::genRandPointOnSphere() * _boid->getMaxSpeed() * calcWeight(_boid, steerForce) * m_weight;
+    }
+
     ngl::Real weight = calcWeight(_boid, steerForce);
     steerForce.normalize();
     return  steerForce * _boid->getMaxSpeed() * weight * m_weight;

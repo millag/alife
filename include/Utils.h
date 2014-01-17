@@ -22,7 +22,7 @@ T clamp(T v, T a, T b);
 ngl::Real getSign(ngl::Real _value);
 ngl::Real randf(ngl::Real _min = 0.0, ngl::Real _max = 1.0);
 ngl::Vec4 genRandPointInBox(ngl::Real _bBoxMin = -1.0, ngl::Real _bBoxMax = 1.0);
-ngl::Vec4 genRandPointInSphere(ngl::Real _radius = 1.0, const ngl::Vec4& _center = ngl::Vec4());
+ngl::Vec4 genRandPointOnSphere(ngl::Real _radius = 1.0, const ngl::Vec4& _center = ngl::Vec4());
 void truncate(ngl::Vec4& io_v, ngl::Real _maxLength);
 
 bool isInsideVolume(const ngl::Vec4& _p, const AABB& _volume);

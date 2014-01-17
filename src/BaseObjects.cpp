@@ -60,7 +60,7 @@ void RenderObject::calcBoundingRadius()
 MovingObject::MovingObject(const Mesh *_mesh, int _shaderId, const ngl::Transformation &_transform):
     RenderObject(_mesh, _shaderId, _transform)
 {
-    m_headingDir = utils::C_EZ * m_transform.getMatrix();
+    m_headingDir = m_transform.getMatrix().getBackVector();
     m_headingDir.normalize();
     assert(m_headingDir.m_w == 0);
     m_position = m_transform.getPosition();
@@ -111,11 +111,14 @@ void MovingObject::updateHeading()
 
     ngl::Vec4 yaxis = ngl::Vec4(m_transform.getMatrix().getUpVector());
     yaxis.m_w = 0;
-
+    assert(yaxis.lengthSquared() > utils::C_ERR);
     ngl::Vec4 zaxis = m_headingDir;
+    assert(zaxis.lengthSquared() > utils::C_ERR);
     ngl::Vec4 xaxis = yaxis.cross(zaxis);
+    assert(xaxis.lengthSquared() > utils::C_ERR);
     xaxis.normalize();
     yaxis =  zaxis.cross(xaxis);
+    assert(yaxis.lengthSquared() > utils::C_ERR);
     yaxis.normalize();
 
 
@@ -125,6 +128,7 @@ void MovingObject::updateHeading()
                 m_position.m_x, m_position.m_y, m_position.m_z, 1);
     m_transform.setMatrix(m);
 
+}
 //    ngl::Vec4 localHeading =  m_headingDir;
 //    localHeading.normalize();
 //    ngl::Vec4 projectedHeading(localHeading.m_x, 0, localHeading.m_z, 0);
@@ -136,4 +140,3 @@ void MovingObject::updateHeading()
 //    ngl::Real theta = ngl::degrees(std::acos(projectedHeading.dot((utils::C_EZ)))) * utils::getSign(localHeading.m_x);
 
 //    m_transform.addRotation(phi, theta, 0);
-}

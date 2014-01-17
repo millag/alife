@@ -34,7 +34,7 @@ bool Boid::isInNeighbourhood(const MovingObject &_so) const
 {
     ngl::Vec4 dir = _so.getPosition() - getPosition();
     ngl::Real distSqr = dir.lengthSquared();
-    if (distSqr == 0)
+    if (distSqr < utils::C_ERR)
         return true;
 
     dir.normalize();
@@ -45,15 +45,15 @@ RenderObject *Boid::sCreate(const Mesh *_mesh)
 {
     static unsigned boidCnt = 0;
 
-    ngl::Vec4 v = utils::genRandPointInSphere(1.0);
+    ngl::Vec4 v = utils::genRandPointOnSphere(1.0);
     v.m_w = 0;
 //    v *= utils::randf(5, 8);
 //    ngl::Vec4 p = utils::genRandPointInBox(-10.0, 10.0);
-    ngl::Vec4 p = ngl::Vec4(boidCnt * 1, 0, 0);
+    ngl::Vec4 p = ngl::Vec4(0, 0, 0);
     Boid* boid = new Boid(_mesh, -1);
     boid->m_position = p;
     boid->setMass(1.0);
-    boid->setMaxSpeed(5.0);
+    boid->setMaxSpeed(2.0);
     boid->setMaxTurningAngle(ngl::PI / 4);
     boid->setVelocity(v);
 

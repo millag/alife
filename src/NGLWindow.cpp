@@ -231,8 +231,9 @@ void NGLWindow::initialize()
     if ( m_scene == NULL )
         return;
 
-    ngl::Vec3 eye(m_scene->getBoundingVolume().getBottomLeft().m_x / 2, m_scene->getBoundingVolume().getTopRight().m_y / 2, -m_scene->getBoundingVolume().getBottomLeft().m_z);
-    eye += eye * 2;
+//    ngl::Vec3 eye(m_scene->getBoundingVolume().getBottomLeft().m_x / 2, m_scene->getBoundingVolume().getTopRight().m_y / 2, -m_scene->getBoundingVolume().getBottomLeft().m_z);
+//    eye += eye * 2;
+    ngl::Vec3 eye(0, 20, -20);
     ngl::Vec3 at(0,0,0);
     ngl::Vec3 up(0,1,0);
     m_camera = new ngl::Camera(eye, at, up);

@@ -28,13 +28,13 @@ void Flock::initialize()
 {
     m_integrator = new Integrator();
 
-    m_rules.resize(1, NULL);
-    m_rules[0] = new Alignment(this, 0.5, 0.5);
-//    m_rules.resize(4, NULL);
-//    m_rules[0] = new Separation(this, 1.0, 1.0);
-//    m_rules[1] = new Alignment(this, 0.5, 0.5);
-//    m_rules[2] = new Cohesion(this, 0.5, 0.4);
-//    m_rules[3] = new VolumeConstraint(m_scene.getBoundingVolume(), 0.4, 1.0);
+//    m_rules.resize(1, NULL);
+//    m_rules[0] = new Alignment(this, 0.5, 1.0);
+    m_rules.resize(4, NULL);
+    m_rules[0] = new Separation(this, 1.0, 1.0);
+    m_rules[1] = new Alignment(this, 0.5, 0.5);
+    m_rules[2] = new Cohesion(this, 0.5, 0.4);
+    m_rules[3] = new VolumeConstraint(m_scene.getBoundingVolume(), 0.4, 1.0);
 
     std::stable_sort(m_rules.begin(), m_rules.end(), compareRules);
 }

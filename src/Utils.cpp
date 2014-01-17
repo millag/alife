@@ -1,5 +1,6 @@
 #include "Utils.h"
 #include <cstdlib>
+#include "ngl/Util.h"
 
 template<class T>
 T utils::clamp(T v, T a, T b)
@@ -16,17 +17,16 @@ ngl::Vec4 utils::genRandPointInBox( ngl::Real _bBoxMin, ngl::Real _bBoxMax )
     return ngl::Vec4(randf(_bBoxMin, _bBoxMax), randf(_bBoxMin, _bBoxMax), randf(_bBoxMin, _bBoxMax));
 }
 
-ngl::Vec4 utils::genRandPointInSphere(ngl::Real _radius, const ngl::Vec4& _center)
+// generate with uniform distribution - thank you http://mathworld.wolfram.com
+ngl::Vec4 utils::genRandPointOnSphere(ngl::Real _radius, const ngl::Vec4& _center)
 {
-//    TODO generate with uniform distribution
-    ngl::Vec4 v = genRandPointInBox();
-    if (v.lengthSquared() < C_ERR)
-        return _center;
+    ngl::Real u = randf(-1, 1);
+    ngl::Real theta = randf(0, ngl::PI * 2);
 
-    v.normalize();
-    v *= _radius;
-    v += _center;
-    return v;
+    ngl::Real x = std::sqrt(1 - u * u) * std::cos(theta);
+    ngl::Real y = std::sqrt(1 - u * u) * std::sin(theta);
+    ngl::Real z = u * _radius;
+    return ngl::Vec4(x, y, z) + _center;
 }
 
 ngl::Real utils::getSign(ngl::Real _value)
@@ -36,7 +36,8 @@ ngl::Real utils::getSign(ngl::Real _value)
 
 void utils::truncate(ngl::Vec4& io_v, ngl::Real _maxLength)
 {
-    if (io_v.lengthSquared() > _maxLength * _maxLength)
+    ngl::Real maxLengthSqr = _maxLength * _maxLength;
+    if (maxLengthSqr > C_ERR  && io_v.lengthSquared() > maxLengthSqr)
     {
         io_v.normalize();
         io_v *= _maxLength;

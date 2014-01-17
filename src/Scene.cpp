@@ -30,7 +30,7 @@ Scene::~Scene()
 
 void Scene::initialize()
 {
-    m_boundingVolume.reshape(ngl::Vec4(-50, -50, -50), ngl::Vec4(50, 50, 50));
+    m_boundingVolume.reshape(ngl::Vec4(-10, -10, -10), ngl::Vec4(10, 10, 10));
 
     RenderObjectFactory::sRegisterObject("boid", Boid::sCreate);
     RenderObjectFactory::sRegisterObject("obstacle", Obstacle::sCreate);
