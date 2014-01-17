@@ -25,7 +25,7 @@ public:
     ngl::Real getObstacleLookupDistanceSqr() const { return m_obstacleLookupDist * m_obstacleLookupDist; }
     void setObstacleLookupDistance(ngl::Real _d);
 
-    bool isInNeighbourhood(const RenderObject& _so) const;
+    bool isInNeighbourhood(const MovingObject &_so) const;
 
     static RenderObject *sCreate(const Mesh* _mesh);
 

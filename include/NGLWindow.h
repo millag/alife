@@ -8,6 +8,7 @@
 #include "ngl/Light.h"
 #include "ngl/TransformStack.h"
 #include "ngl/Text.h"
+#include "ngl/BBox.h"
 
 #include "Scene.h"
 
@@ -99,11 +100,19 @@ private:
     /// note: whenever scene is changed initializition and render should be retrigered
     //----------------------------------------------------------------------------------------------------------------------
     Scene* m_scene;
-
     //----------------------------------------------------------------------------------------------------------------------
     /// @brief array of VAO objects created for each mesh in scene, used for fast rendering
     //----------------------------------------------------------------------------------------------------------------------
     std::vector<ngl::VertexArrayObject*> m_VAOList;
+
+    ngl::Light* m_light;
+    ngl::Camera* m_camera;
+    ngl::BBox* m_boundingVolume;
+
+
+
+
+
 
     //----------------------------------------------------------------------------------------------------------------------
     /// @brief transformation stack for the gl transformations etc
@@ -155,6 +164,7 @@ private:
     void buildVAOs();
 
     void feedVAO(const Mesh* _mesh, ngl::VertexArrayObject& o_vao);
+    void createBoundingVolume();
 };
 
 

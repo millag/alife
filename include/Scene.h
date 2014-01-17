@@ -20,15 +20,13 @@ public:
     void initialize();
     void update(ngl::Real _deltaT);
 
-    const ngl::Light* getLight() const;
-    ngl::Camera *getCamera();
+    const AABB& getBoundingVolume() const;
     const std::vector<RenderObject*>& getRenderObjects() const;
     const std::vector<Mesh*>& getMeshes() const;
 
 private:
-    ngl::Light* m_light;
-    ngl::Camera* m_camera;
     std::vector<Flock*> m_flocks;
+    AABB m_boundingVolume;
 
     std::vector<RenderObject*> m_renderObjects;
     std::vector<Mesh*> m_meshes;

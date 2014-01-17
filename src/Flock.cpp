@@ -3,7 +3,7 @@
 
 Flock::Flock():m_scene(Scene()) { }
 
-Flock::Flock(const Scene& _scene):m_scene(_scene),m_maxSpeed(2.0)
+Flock::Flock(const Scene& _scene):m_scene(_scene)
 {
     initialize();
 }
@@ -28,10 +28,13 @@ void Flock::initialize()
 {
     m_integrator = new Integrator();
 
-    m_rules.resize(3, NULL);
-    m_rules[1] = new Separation(this, 1.0, 1.0);
+    m_rules.resize(1, NULL);
     m_rules[0] = new Alignment(this, 0.5, 0.5);
-    m_rules[2] = new Cohesion(this, 0.5, 0.4);
+//    m_rules.resize(4, NULL);
+//    m_rules[0] = new Separation(this, 1.0, 1.0);
+//    m_rules[1] = new Alignment(this, 0.5, 0.5);
+//    m_rules[2] = new Cohesion(this, 0.5, 0.4);
+//    m_rules[3] = new VolumeConstraint(m_scene.getBoundingVolume(), 0.4, 1.0);
 
     std::stable_sort(m_rules.begin(), m_rules.end(), compareRules);
 }
@@ -46,7 +49,6 @@ bool Flock::isInFlock(const Boid *_boid) const
 void Flock::joinBoid(Boid *_boid)
 {
     assert(!isInFlock(_boid));
-    _boid->setMaxSpeed(m_maxSpeed);
     m_boids.push_back(_boid);
 }
 

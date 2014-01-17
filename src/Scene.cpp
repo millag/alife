@@ -10,8 +10,6 @@ Scene::~Scene()
     RenderObjectFactory::sUnregisterObject("boid");
     RenderObjectFactory::sUnregisterObject("obstacle");
 
-    delete m_camera;
-    delete m_light;
 //QUESTION: when using vector of pointers do I need to free the memory explicitly
 //    delete geometry
     typedef std::vector<Flock*>::const_iterator FIter;
@@ -32,20 +30,7 @@ Scene::~Scene()
 
 void Scene::initialize()
 {
-    m_camera = new ngl::Camera(ngl::Vec3(0,30,30), ngl::Vec3(0,0,0), ngl::Vec3(0,1,0));
-    // set the shape using FOV 45 Aspect Ratio based on Width and Height
-    // The final two are near and far clipping planes of 0.5 and 10
-    m_camera->setShape(45, (float)720.0 / 576.0, 0.001, 350);
-
-    // now create our light this is done after the camera so we can pass the
-    // transpose of the projection matrix to the light to do correct eye space
-    // transformations
-    ngl::Mat4 iv = m_camera->getViewMatrix();
-    iv.transpose();
-    iv=iv.inverse();
-
-    m_light = new ngl::Light(ngl::Vec3(0,1,0),ngl::Colour(1,1,1,1),ngl::Colour(1,1,1,1),ngl::POINTLIGHT);
-    m_light->setTransform(iv);
+    m_boundingVolume.reshape(ngl::Vec4(-50, -50, -50), ngl::Vec4(50, 50, 50));
 
     RenderObjectFactory::sRegisterObject("boid", Boid::sCreate);
     RenderObjectFactory::sRegisterObject("obstacle", Obstacle::sCreate);
@@ -58,7 +43,7 @@ void Scene::initialize()
     Mesh* mesh = new BoidMesh(meshId);
     m_meshes.push_back(mesh);
 
-    unsigned nBoids = 10;
+    unsigned nBoids = 3;
     m_renderObjects.resize(nBoids, NULL);
     for (unsigned i = 0; i < m_renderObjects.size(); ++i)
     {
@@ -88,12 +73,7 @@ const std::vector<Mesh*>& Scene::getMeshes() const
     return m_meshes;
 }
 
-ngl::Camera *Scene::getCamera()
+const AABB& Scene::getBoundingVolume() const
 {
-    return m_camera;
-}
-
-const ngl::Light *Scene::getLight() const
-{
-    return m_light;
+    return m_boundingVolume;
 }

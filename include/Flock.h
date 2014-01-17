@@ -27,7 +27,6 @@ protected:
     std::vector<Boid*> m_boids;
 //    note: rules are created and owned by the flock itself so it must clean them up
     std::vector<Rule*> m_rules;
-    ngl::Real m_maxSpeed;
 
     std::vector<Boid*> m_neighbours;
 

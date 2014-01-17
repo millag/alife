@@ -8,24 +8,25 @@ class AABB
 {
 public:
     AABB();
-    AABB(const std::vector<ngl::Vec4>& _boundaryVerts);
+    AABB(const ngl::Vec4& _vmin,  const ngl::Vec4& _vmax);
 
     ngl::Real getBoundingRadius() const { return m_boundingRadius; }
     ngl::Vec4 getBottomLeft() const { return m_vmin; }
     ngl::Vec4 getTopRight() const { return m_vmax; }
     ngl::Vec4 getCenter() const { return (m_vmin + m_vmax) / 2; }
+    ngl::Real getWidth() const { return m_dimetions.m_x; }
+    ngl::Real getHeight() const { return m_dimetions.m_y; }
+    ngl::Real getDepth() const { return m_dimetions.m_z; }
 
-    const std::vector<ngl::Vec4>& getBoundaryVertices() const { return m_boundaryVerts; }
-    void setBoundaryVertices(const std::vector<ngl::Vec4>& _boundaryVerts);
+    void reshape(const ngl::Vec4& _vmin,  const ngl::Vec4& _vmax);
 
 protected:
-    std::vector<ngl::Vec4> m_boundaryVerts;
     ngl::Vec4 m_vmin;
     ngl::Vec4 m_vmax;
+    ngl::Vec4 m_dimetions;
     ngl::Real m_boundingRadius;
 
-    bool areBoundaryVerts(const std::vector<ngl::Vec4>& _boundaryVerts);
-    void calcBoundingBox();
+    void calcBoundingRadius();
 };
 
 class Mesh
@@ -50,7 +51,7 @@ public:
     const std::vector<ngl::Vec4>& getNormals() const { return m_normals; }
     const std::vector<unsigned>& getNIndices() const { return m_nindices; }
     const AABB& getAABB() const { return m_AABB; }
-    ngl::Real getBoundingRadius() const { return m_AABB.getBoundingRadius(); }
+    ngl::Real getBoundingRadius() const;
 
     void calcNormals(Mesh::SHADING_MODE _mode);
 

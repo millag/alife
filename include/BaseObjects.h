@@ -16,7 +16,6 @@ public:
     void setMesh(const Mesh* _mesh);
     const ngl::Transformation& getTransform() const { return m_transform; }
     void setTransform(const ngl::Transformation& _transform);
-    const ngl::Vec4& getPosition() const { return m_transform.getPosition(); }
 
     ngl::Real getBoundingRadius() const { return m_boundingRadius; }
 
@@ -38,13 +37,18 @@ public:
     MovingObject(const Mesh* _mesh, int _shaderId, const ngl::Transformation& _transform = ngl::Transformation());
     virtual ~MovingObject() { }
 
-    ngl::Vec4 getHeadingDir() const;
+    const ngl::Vec4& getHeadingDir() const;
+    const ngl::Vec4& getPosition() const;
 
     ngl::Vec4 getVelocity() const { return m_velocity; }
     void setVelocity(const ngl::Vec4& _v);
 
     ngl::Vec4 getAcceleration() const { return m_acceleration; }
-    void setAcceleration(const ngl::Vec4& _a) { m_acceleration = _a; }
+    void setAcceleration(const ngl::Vec4& _a)
+    {
+        assert(_a.m_w == 0);
+        m_acceleration = _a;
+    }
 
     ngl::Real getMaxSpeed() const { return m_maxSpeed; }
     ngl::Real getMaxSpeedSqr() const { return m_maxSpeedSqr; }
@@ -72,9 +76,9 @@ public:
     virtual void update(ngl::Real _deltaT);
 
 protected:
-//    measured in units per sec
+//    measured in units per sec, kept in global space coords
     ngl::Vec4 m_acceleration;
-//    measured in units per sec
+//    measured in units per sec, kept in global space coords
     ngl::Vec4 m_velocity;
 //    measured in units per sec
     ngl::Real m_maxSpeed;
@@ -83,8 +87,9 @@ protected:
     ngl::Real m_maxTurningAngle;
 //    measured in kg
     ngl::Real m_mass;
-
+//    normalized vector pointing the direction the object is facing in global space coords
     ngl::Vec4 m_headingDir;
+    ngl::Vec4 m_position;
 
     void updateHeading();
 };

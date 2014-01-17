@@ -43,14 +43,12 @@ void Alife::go()
     m_window->resize(1024, 720);
     // and finally show
     m_window->show();
-    m_timer->start(utils::c_updateRate);
+    m_timer->start(utils::C_UPDATERATE);
 }
 
 void Alife::update()
 {
-    std::cout << "UPDATE" << std::endl;
-//    TODO implement update
-    ngl::Real deltaT = 1.0 / utils::c_fps;
+    ngl::Real deltaT = 1.0 / utils::C_FPS;
     m_scene->update(deltaT);
     // re-draw GL
     m_window->renderLater();

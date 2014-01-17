@@ -6,15 +6,15 @@
 
 namespace utils {
 
-const static unsigned short c_sec = 1000;
-const static unsigned short c_fps = 30;
-const static unsigned short c_updateRate = c_sec / 30;
+const static unsigned short C_SEC = 1000;
+const static unsigned short C_FPS = 60;
+const static unsigned short C_UPDATERATE = C_SEC / C_FPS;
 
-const static ngl::Real c_err = 0.000001;
-const static ngl::Vec4 c_ex(1,0,0,0);
-const static ngl::Vec4 c_ey(0,1,0,0);
-const static ngl::Vec4 c_ez(0,0,1,0);
-const static ngl::Vec4 c_ew(0,0,0,1);
+const static ngl::Real C_ERR = 0.000001;
+const static ngl::Vec4 C_EX(1,0,0,0);
+const static ngl::Vec4 C_EY(0,1,0,0);
+const static ngl::Vec4 C_EZ(0,0,1,0);
+const static ngl::Vec4 C_EW(0,0,0,1);
 
 template<class T>
 T clamp(T v, T a, T b);

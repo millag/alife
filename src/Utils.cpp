@@ -20,7 +20,7 @@ ngl::Vec4 utils::genRandPointInSphere(ngl::Real _radius, const ngl::Vec4& _cente
 {
 //    TODO generate with uniform distribution
     ngl::Vec4 v = genRandPointInBox();
-    if (v.lengthSquared() < c_err)
+    if (v.lengthSquared() < C_ERR)
         return _center;
 
     v.normalize();

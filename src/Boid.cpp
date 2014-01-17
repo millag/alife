@@ -30,7 +30,7 @@ void Boid::setObstacleLookupDistance(ngl::Real _d)
     m_obstacleLookupDist = _d + ((m_mesh == NULL)? 0 : m_mesh->getBoundingRadius());
 }
 
-bool Boid::isInNeighbourhood(const RenderObject &_so) const
+bool Boid::isInNeighbourhood(const MovingObject &_so) const
 {
     ngl::Vec4 dir = _so.getPosition() - getPosition();
     ngl::Real distSqr = dir.lengthSquared();
@@ -43,30 +43,28 @@ bool Boid::isInNeighbourhood(const RenderObject &_so) const
 
 RenderObject *Boid::sCreate(const Mesh *_mesh)
 {
-        ngl::Transformation t;
-        t.setPosition(utils::genRandPointInBox(-5.0, 5.0));
+    static unsigned boidCnt = 0;
 
-        Boid* boid = new Boid(_mesh, -1, t);
-        ngl::Vec4 v = utils::genRandPointInSphere(1.0);
-//        ngl::Vec4 v(1.0,0,0);
-        boid->setMaxSpeed(1.0);
-        boid->setMaxTurningAngle(ngl::PI);
-        boid->setMass(1.0);
-        boid->setVelocity(v);
+    ngl::Vec4 v = utils::genRandPointInSphere(1.0);
+    v.m_w = 0;
+//    v *= utils::randf(5, 8);
+//    ngl::Vec4 p = utils::genRandPointInBox(-10.0, 10.0);
+    ngl::Vec4 p = ngl::Vec4(boidCnt * 1, 0, 0);
+    Boid* boid = new Boid(_mesh, -1);
+    boid->m_position = p;
+    boid->setMass(1.0);
+    boid->setMaxSpeed(5.0);
+    boid->setMaxTurningAngle(ngl::PI / 4);
+    boid->setVelocity(v);
 
-        boid->setNeighbourhoodDistance(15.0);
-        boid->setNeighbourhoodFOV(ngl::PI);
-        boid->setPanicDistance(1.0);
-        boid->setObstacleLookupDistance(4.0);
-        return boid;
+    boid->setPanicDistance(1.0);
+    boid->setNeighbourhoodDistance(1.0);
+    boid->setNeighbourhoodFOV(ngl::PI);
+    boid->setObstacleLookupDistance(20.0);
 
-//        ngl::Transformation t;
-//        t.setPosition(ngl::Vec4());
+    boidCnt++;
 
-//        Boid* boid = new Boid(_meshId, t);
-//        ngl::Vec4 v(utils::ex);
-//        boid->setVelocity( v + v * (0.5 / v.length()));
-//        return boid;
+    return boid;
 }
 
 

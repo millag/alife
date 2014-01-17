@@ -34,10 +34,14 @@ NGLWindow::NGLWindow(QWindow *_parent) : OpenGLWindow(_parent), m_scene(NULL)
 NGLWindow::~NGLWindow()
 {
     ngl::NGLInit *Init = ngl::NGLInit::instance();
+
     std::cout<<"Shutting down NGL, removing VAO's and Shaders\n";
     if (m_scene != NULL)
     {
         delete m_scene;
+        delete m_camera;
+        delete m_light;
+        delete m_boundingVolume;
     }
     Init->NGLQuit();
 }
@@ -62,8 +66,11 @@ void NGLWindow::resizeEvent(QResizeEvent *_event )
         // set the viewport for openGL
         glViewport(0,0,w,h);
         // now set the camera size values as the screen size has changed
-        m_scene->getCamera()->setShape(45,(float)w/h,0.05,350);
-        renderLater();
+        if (m_scene)
+        {
+            m_camera->setShape(45,(float)w/h,0.05,350);
+            renderLater();
+        }
     }
 }
 
@@ -119,6 +126,61 @@ void NGLWindow::feedVAO(const Mesh* _mesh, ngl::VertexArrayObject& o_vao)
     o_vao.unbind();
 }
 
+void NGLWindow::createBoundingVolume()
+{
+//    create scene bounding volume
+    m_boundingVolume = new ngl::BBox(m_scene->getBoundingVolume().getCenter().toVec3(),
+                                     m_scene->getBoundingVolume().getWidth(),
+                                     m_scene->getBoundingVolume().getHeight(),
+                                     m_scene->getBoundingVolume().getDepth());
+    m_boundingVolume->setDrawMode(GL_LINE);
+
+//    create reference grid
+    ngl::VAOPrimitives *prim=ngl::VAOPrimitives::instance();
+    prim->createLineGrid("grid", 10, 10, 10);
+
+//    ngl::Vec4 vmin = m_scene->getBoundingVolume().getBottomLeft();
+//    ngl::Vec4 vmax = m_scene->getBoundingVolume().getTopRight();
+//    std::vector<ngl::Vec4> v(8);
+//    v[0] = ngl::Vec4(vmin.m_x, vmin.m_y, vmin.m_z);
+//    v[1] = ngl::Vec4(vmax.m_x, vmin.m_y, vmin.m_z);
+//    v[2] = ngl::Vec4(vmax.m_x, vmax.m_y, vmin.m_z);
+//    v[3] = ngl::Vec4(vmin.m_x, vmax.m_y, vmin.m_z);
+
+//    v[4] = ngl::Vec4(vmin.m_x, vmin.m_y, vmax.m_z);
+//    v[5] = ngl::Vec4(vmax.m_x, vmin.m_y, vmax.m_z);
+//    v[6] = ngl::Vec4(vmax.m_x, vmax.m_y, vmax.m_z);
+//    v[7] = ngl::Vec4(vmin.m_x, vmax.m_y, vmax.m_z);
+
+//    unsigned vidx[] = { 0, 2, 3, 2, 0, 1,
+//                        0, 3, 4, 4, 3, 7,
+//                        4, 7, 6, 4, 6, 5,
+//                        3, 2, 7, 7, 2, 6,
+//                        2, 1, 5, 2, 5, 6,
+//                        1, 0, 4, 1, 4, 5 };
+//    std::vector<unsigned> vi(vidx, vidx + 24);
+
+
+
+//    ngl::VertexArrayObject* vao = ngl::VertexArrayObject::createVOA(GL_LINE);
+//    m_VAOList.push_back(vao);
+//    vao->bind();
+
+//    // in this case we are going to set our data as the vertices above
+//    // now we set the attribute pointer to be 0 (as this matches vertIn in our shader)
+//    vao->setIndexedData(v.size() * sizeof(ngl::Vec4),
+//                        v[0].m_x,
+//                        vi.size(),
+//                        &vi[0],
+//                        GL_UNSIGNED_INT);
+
+//    vao->setVertexAttributePointer(0,4,GL_FLOAT,0,0);
+//    vao->setNumIndices(vi.size());
+
+//    // now unbind
+//    vao->unbind();
+}
+
 void NGLWindow::initialize()
 {
     // we must call this first before any other GL commands to load and link the
@@ -163,37 +225,51 @@ void NGLWindow::initialize()
     ngl::Material m(ngl::BRONZE);
     // load our material values to the shader into the structure material (see Vertex shader)
     m.loadToShader("material");
-
+    // as re-size is not explicitly called we need to do this.
     glViewport(0,0,width(),height());
 
     if ( m_scene == NULL )
         return;
 
+    ngl::Vec3 eye(m_scene->getBoundingVolume().getBottomLeft().m_x / 2, m_scene->getBoundingVolume().getTopRight().m_y / 2, -m_scene->getBoundingVolume().getBottomLeft().m_z);
+    eye += eye * 2;
+    ngl::Vec3 at(0,0,0);
+    ngl::Vec3 up(0,1,0);
+    m_camera = new ngl::Camera(eye, at, up);
+    // set the shape using FOV 45 Aspect Ratio based on Width and Height
+    // The final two are near and far clipping planes of 0.5 and 10
+    m_camera->setShape(45, (float)720.0 / 576.0, 0.001, 350);
+    shader->setShaderParam3f("viewerPos",m_camera->getEye().m_x,m_camera->getEye().m_y,m_camera->getEye().m_z);
 
-    // now load to our camera
-    ngl::Camera* camera = m_scene->getCamera();
-    shader->setShaderParam3f("viewerPos",camera->getEye().m_x,camera->getEye().m_y,camera->getEye().m_z);
+    // now create our light this is done after the camera so we can pass the
+    // transpose of the projection matrix to the light to do correct eye space
+    // transformations
+    ngl::Mat4 iv = m_camera->getViewMatrix();
+    iv.transpose();
+    iv=iv.inverse();
 
+    m_light = new ngl::Light(ngl::Vec3(0,1,0),ngl::Colour(1,1,1,1),ngl::Colour(1,1,1,1),ngl::POINTLIGHT);
+    m_light->setTransform(iv);
     // load these values to the shader as well
-    m_scene->getLight()->loadToShader("light");
-    // as re-size is not explicitly called we need to do this.
+    m_light->loadToShader("light");
 
-    // now build VAO for each geometry in scene
+    // build VAO for each geometry in scene
     buildVAOs();
+    // build VAO to render scene bounding volume
+    createBoundingVolume();
 }
 
 
 void NGLWindow::loadMatricesToShader()
 {
     ngl::ShaderLib *shader=ngl::ShaderLib::instance();
-    ngl::Camera* camera = m_scene->getCamera();
     ngl::Mat4 MV;
     ngl::Mat4 MVP;
     ngl::Mat3 normalMatrix;
     ngl::Mat4 M;
     M=m_transformStack.getCurrAndGlobal().getMatrix();
-    MV=  m_transformStack.getCurrAndGlobal().getMatrix()*camera->getViewMatrix();
-    MVP= M*camera->getVPMatrix();
+    MV=  m_transformStack.getCurrAndGlobal().getMatrix()*m_camera->getViewMatrix();
+    MVP= M*m_camera->getVPMatrix();
     normalMatrix=MV;
     normalMatrix.inverse();
     shader->setShaderParamFromMat4("MV",MV);
@@ -228,9 +304,14 @@ void NGLWindow::render()
     trans.setMatrix(final);
     m_transformStack.setGlobal(trans);
 
+    if (m_scene == NULL)
+    {
+        return;
+    }
+    ngl::VertexArrayObject* vao;
+
     // draw
     loadMatricesToShader();
-
     const std::vector<RenderObject*>& roList = m_scene->getRenderObjects();
     typedef std::vector<RenderObject*>::const_iterator ROIter;
     for (ROIter it = roList.begin(); it != roList.end(); ++it)
@@ -243,7 +324,7 @@ void NGLWindow::render()
             loadMatricesToShader();
 
 //            actual draw
-            ngl::VertexArrayObject* vao =  m_VAOList.at(ro->getMeshId());
+            vao =  m_VAOList.at(ro->getMeshId());
             if (vao == NULL)
             {
                 continue;
@@ -251,16 +332,14 @@ void NGLWindow::render()
             vao->bind();
             vao->draw();
             vao->unbind();
-        } // and before a pop
+        }
         m_transformStack.popTransform();
     }
 
-//    typedef std::map<Geometry*, ngl::VertexArrayObject*>::const_iterator Iter;
-//    for (Iter it = m_geomToVAOMap.begin(); it != m_geomToVAOMap.end() ; ++it) {
-//        it->second->bind();
-//        it->second->draw();
-//        it->second->unbind();
-//    }
+    ngl::VAOPrimitives *prim = ngl::VAOPrimitives::instance();
+    loadMatricesToShader();
+    prim->draw("grid");
+    m_boundingVolume->draw();
 }
 
 //----------------------------------------------------------------------------------------------------------------------

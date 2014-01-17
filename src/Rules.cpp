@@ -18,6 +18,7 @@ void Rule::setWeight(ngl::Real _w)
 ngl::Vec4 Seek::getForce(const Boid *_boid)
 {
     ngl::Vec4 steerForce = m_target - _boid->getPosition();
+    steerForce.m_w = 0;
     ngl::Real weight = calcWeight(_boid, steerForce);
     steerForce.normalize();
     return  steerForce * _boid->getMaxSpeed() * weight * m_weight;
@@ -33,6 +34,7 @@ ngl::Real Seek::calcWeight(const Boid *_boid, const ngl::Vec4 &_steerForce)
 ngl::Vec4 Flee::getForce(const Boid *_boid)
 {
     ngl::Vec4 steerForce = _boid->getPosition() - m_target;
+    steerForce.m_w = 0;
     ngl::Real weight = calcWeight(_boid, steerForce);
     steerForce.normalize();
     return  steerForce * _boid->getMaxSpeed() * weight * m_weight;
@@ -57,7 +59,7 @@ INeighboursServant &Separation::getServant() const
 ngl::Vec4 Separation::getForce(const Boid *_boid)
 {
     const std::vector<Boid *> &neighbours = getServant().getNeighbours(_boid);
-    ngl::Vec4 steerForce;
+    ngl::Vec4 steerForce(0,0,0,0);
 
      typedef std::vector<Boid*>::const_iterator BIter;
      for (BIter it = neighbours.begin(); it != neighbours.end(); ++it)
@@ -85,7 +87,7 @@ INeighboursServant& Alignment::getServant() const
 ngl::Vec4 Alignment::getForce(const Boid *_boid)
 {
     const std::vector<Boid *> &neighbours = getServant().getNeighbours(_boid);
-    ngl::Vec4 steerForce;
+    ngl::Vec4 steerForce(0,0,0,0);
 
     typedef std::vector<Boid*>::const_iterator BIter;
     for (BIter it = neighbours.begin(); it != neighbours.end(); ++it)
@@ -119,8 +121,8 @@ INeighboursServant &Cohesion::getServant() const
 ngl::Vec4 Cohesion::getForce(const Boid *_boid)
 {
     const std::vector<Boid *> &neighbours = getServant().getNeighbours(_boid);
-    ngl::Vec4 steerForce;
-    ngl::Vec4 massCenter;
+    ngl::Vec4 steerForce(0,0,0,0);
+    ngl::Vec4 massCenter(0,0,0,1);
     typedef std::vector<Boid*>::const_iterator BIter;
     for (BIter it = neighbours.begin(); it != neighbours.end(); ++it)
     {
@@ -147,11 +149,11 @@ ngl::Real Cohesion::calcWeight(const Boid *_boid, const ngl::Vec4 &_steerForce)
 
 ngl::Vec4 VolumeConstraint::getForce(const Boid *_boid)
 {
-    ngl::Vec4 steerForce;
+    ngl::Vec4 steerForce(0,0,0,0);
     if (!utils::isInsideVolume(_boid->getPosition(), m_volume))
     {
         m_seek.setTarget(m_volume.getCenter());
-        steerForce = m_seek.getForce(_boid);
+        steerForce += m_seek.getForce(_boid);
         utils::truncate(steerForce, _boid->getMaxSpeed());
         return  steerForce * calcWeight(_boid, steerForce) * m_weight;
     }
