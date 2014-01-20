@@ -23,11 +23,25 @@ ngl::Vec4 utils::genRandPointOnSphere(ngl::Real _radius, const ngl::Vec4& _cente
     ngl::Real u = randf(-1, 1);
     ngl::Real theta = randf(0, ngl::PI * 2);
 
-    ngl::Real x = std::sqrt(1 - u * u) * std::cos(theta);
-    ngl::Real y = std::sqrt(1 - u * u) * std::sin(theta);
+    ngl::Real x = std::sqrt(1 - u * u) * std::cos(theta) * _radius;
+    ngl::Real y = std::sqrt(1 - u * u) * std::sin(theta) * _radius;
     ngl::Real z = u * _radius;
     return ngl::Vec4(x, y, z) + _center;
 }
+
+// generate with uniform distribution
+ngl::Vec4 utils::genRandPointInCircle(ngl::Real _radius, const ngl::Vec4& _center)
+{
+    ngl::Real theta = randf() * ngl::PI * 2;
+    ngl::Real r = std::sqrt(randf()) * _radius;
+
+    ngl::Real x = std::cos(theta) * r;
+    ngl::Real y = std::sin(theta) * r;
+    ngl::Real z = 0;
+
+    return  ngl::Vec4(x, y, z) + _center;
+}
+
 
 ngl::Real utils::getSign(ngl::Real _value)
 {

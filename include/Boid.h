@@ -4,11 +4,16 @@
 #include "Utils.h"
 #include "BaseObjects.h"
 
+class Rule;
+
 class Boid : public MovingObject
 {
 public:
     Boid(const Mesh* _mesh, int _shaderId, const ngl::Transformation& _transform = ngl::Transformation());
     virtual ~Boid();
+
+    const std::vector<Rule*>& getRules() const { return m_rules; }
+    void setRules(const std::vector<Rule*>& _rules);
 
     ngl::Real getNeighbourhoodDistance() const { return m_neighbourhoodDist; }
     ngl::Real getNeighbourhoodDistanceSqr() const { return m_neighbourhoodDist * m_neighbourhoodDist; }
@@ -37,6 +42,7 @@ protected:
     ngl::Real m_neighbourhoodFOV;
     ngl::Real m_panicDist;
     ngl::Real m_obstacleLookupDist;
+    std::vector<Rule*> m_rules;
 };
 
 #endif // BOID_H

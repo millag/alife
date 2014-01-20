@@ -1,8 +1,10 @@
 #ifndef RULES_H
 #define RULES_H
 
+#include "ngl/Util.h"
 #include "Boid.h"
 #include "Servant.h"
+
 
 class Rule
 {
@@ -125,4 +127,24 @@ protected:
 
     ngl::Real calcWeight(const Boid* _boid, const ngl::Vec4& _steerForce);
 };
+
+
+class Wander : public Rule
+{
+public:
+    Wander(INeighboursServant* _servant, ngl::Real _priority = 1.0, ngl::Real _weight = 1.0,
+           ngl::Real _wanderDist = 3.0, ngl::Real _wanderRadius = 3.0, ngl::Real _jitterAngle = ngl::PI4 / 10);
+
+    INeighboursServant& getServant() const;
+    ngl::Vec4 getForce(const Boid* _boid);
+
+protected:
+    ngl::Real m_wanderDist;
+    ngl::Real m_wanderRadius;
+    ngl::Real m_jitterAngle;
+    ngl::Vec4 m_target;
+
+    ngl::Real calcWeight(const Boid* _boid, const ngl::Vec4& _steerForce);
+};
+
 #endif // RULES_H

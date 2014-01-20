@@ -41,7 +41,9 @@ ngl::Vec4 Flee::getForce(const Boid *_boid)
     steerForce.m_w = 0;
     if (steerForce.lengthSquared() < utils::C_ERR)
     {
-        return utils::genRandPointOnSphere() * _boid->getMaxSpeed() * calcWeight(_boid, steerForce) * m_weight;
+        steerForce = utils::genRandPointOnSphere() * _boid->getMaxSpeed() * calcWeight(_boid, steerForce) * m_weight;
+        steerForce.m_w = 0;
+        return steerForce;
     }
 
     ngl::Real weight = calcWeight(_boid, steerForce);
@@ -190,6 +192,41 @@ ngl::Vec4 VolumeConstraint::getForce(const Boid *_boid)
 }
 
 ngl::Real VolumeConstraint::calcWeight(const Boid *_boid, const ngl::Vec4 &_steerForce)
+{
+    return 1.0;
+}
+
+
+Wander::Wander(INeighboursServant *_servant, ngl::Real _priority, ngl::Real _weight, ngl::Real _wanderDist, ngl::Real _wanderRadius, ngl::Real _jitterAngle):
+                Rule(_servant, _priority, _weight), m_wanderDist(_wanderDist), m_wanderRadius(_wanderRadius),m_jitterAngle(_jitterAngle)
+{
+    m_target = utils::genRandPointOnSphere();
+}
+
+INeighboursServant &Wander::getServant() const
+{
+    return *(dynamic_cast<INeighboursServant*>(m_servant));
+}
+
+ngl::Vec4 Wander::getForce(const Boid *_boid)
+{
+    const std::vector<Boid *> &neighbours = getServant().getNeighbours(_boid);
+    ngl::Vec4 steerForce(0,0,0,0);
+
+//    if (neighbours.size() != 0)
+//    {
+//        return steerForce;
+//    }
+
+//    FIX: calculation of next target position
+    steerForce += _boid->getHeadingDir() * m_wanderDist + m_target * m_wanderRadius;
+    utils::truncate(steerForce, _boid->getMaxSpeed());
+    m_target = m_target + utils::genRandPointOnSphere(std::sin(m_jitterAngle));
+    m_target.normalize();
+    return  steerForce * calcWeight(_boid, steerForce)* m_weight;
+}
+
+ngl::Real Wander::calcWeight(const Boid *_boid, const ngl::Vec4 &_steerForce)
 {
     return 1.0;
 }

@@ -1,5 +1,15 @@
 #include "Boid.h"
+
+#include <algorithm>
 #include "ngl/Util.h"
+#include "Rules.h"
+
+bool compareRules(Rule *_lhs, Rule *_rhs)
+{
+    assert(_lhs != NULL && _rhs != NULL);
+    return _lhs->getPriority() < _rhs->getPriority();
+}
+
 
 Boid::Boid(const Mesh *_mesh, int _shaderId, const ngl::Transformation &_transform):
     MovingObject(_mesh, _shaderId, _transform)
@@ -11,6 +21,14 @@ Boid::Boid(const Mesh *_mesh, int _shaderId, const ngl::Transformation &_transfo
 }
 
 Boid::~Boid() { }
+
+
+void Boid::setRules(const std::vector<Rule*>& _rules)
+{
+    m_rules.clear();
+    m_rules.insert(m_rules.begin(), _rules.begin(), _rules.end());
+    std::stable_sort(m_rules.begin(), m_rules.end(), compareRules);
+}
 
 void Boid::setNeighbourhoodDistance(ngl::Real _d)
 {

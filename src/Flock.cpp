@@ -18,25 +18,17 @@ Flock::~Flock()
     }
 }
 
-bool compareRules(Rule *_lhs, Rule *_rhs)
-{
-    assert(_lhs != NULL && _rhs != NULL);
-    return _lhs->getPriority() < _rhs->getPriority();
-}
-
 void Flock::initialize()
 {
     m_integrator = new Integrator();
 
 //    m_rules.resize(1, NULL);
-//    m_rules[0] = new Alignment(this, 0.5, 1.0);
+//    m_rules[0] = new VolumeConstraint(m_scene.getBoundingVolume(), 0.4, 1.0);
     m_rules.resize(4, NULL);
     m_rules[0] = new Separation(this, 1.0, 1.0);
     m_rules[1] = new Alignment(this, 0.5, 0.5);
     m_rules[2] = new Cohesion(this, 0.5, 0.4);
     m_rules[3] = new VolumeConstraint(m_scene.getBoundingVolume(), 0.4, 1.0);
-
-    std::stable_sort(m_rules.begin(), m_rules.end(), compareRules);
 }
 
 bool Flock::isInFlock(const Boid *_boid) const
@@ -46,9 +38,14 @@ bool Flock::isInFlock(const Boid *_boid) const
     return (it != m_boids.end());
 }
 
+// FIX: rules should be in boid and flock by inserted by builder
 void Flock::joinBoid(Boid *_boid)
 {
     assert(!isInFlock(_boid));
+
+    std::vector<Rule*> rules(m_rules);
+//    rules.push_back(new Wander(this, 0.4, 1.0));
+    _boid->setRules(rules);
     m_boids.push_back(_boid);
 }
 
@@ -63,8 +60,10 @@ void Flock::update(ngl::Real _deltaT)
 
         typedef std::vector<Rule*>::const_iterator RIter;
         int i = 0;
-        std::vector<ngl::Vec4> forces(m_rules.size());
-        for (RIter it = m_rules.begin(); it != m_rules.end(); ++it)
+
+        const std::vector<Rule*>& rules = boid->getRules();
+        std::vector<ngl::Vec4> forces(rules.size());
+        for (RIter it = rules.begin(); it != rules.end(); ++it)
         {
             forces[i++] = (*it)->getForce(boid);
         }

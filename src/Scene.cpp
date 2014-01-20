@@ -38,12 +38,11 @@ void Scene::initialize()
     Flock* flock = new Flock(*this);
     m_flocks.push_back(flock);
 
-    //FIX
     int meshId = m_meshes.size();
     Mesh* mesh = new BoidMesh(meshId);
     m_meshes.push_back(mesh);
 
-    unsigned nBoids = 3;
+    unsigned nBoids = 10;
     m_renderObjects.resize(nBoids, NULL);
     for (unsigned i = 0; i < m_renderObjects.size(); ++i)
     {
