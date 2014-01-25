@@ -445,6 +445,13 @@ void NGLWindow::keyPressEvent(QKeyEvent *_event)
         case Qt::Key_F : showFullScreen(); break;
         // show windowed
         case Qt::Key_N : showNormal(); break;
+        // add agents
+        case Qt::Key_M :
+        {
+            assert(m_scene != NULL);
+            m_scene->addBoids();
+            break;
+        }
         default : break;
     }
     // finally update the GLWindow and re-draw

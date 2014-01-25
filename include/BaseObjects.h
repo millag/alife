@@ -39,6 +39,10 @@ public:
 
     const ngl::Vec4& getHeadingDir() const;
     const ngl::Vec4& getPosition() const;
+    void setPosition(const ngl::Vec4& _pos)
+    {
+        m_position = _pos;
+    }
 
     ngl::Vec4 getVelocity() const { return m_velocity; }
     void setVelocity(const ngl::Vec4& _v);

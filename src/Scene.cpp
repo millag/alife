@@ -3,6 +3,11 @@
 #include "Obstacle.h"
 #include "Flock.h"
 
+RenderObject* createBoid(const Mesh *_mesh);
+RenderObject* createObstacle(const Mesh* _mesh);
+
+//===================================== Scene Class Def ===========================================
+
 Scene::Scene() { }
 
 Scene::~Scene()
@@ -32,26 +37,36 @@ void Scene::initialize()
 {
     m_boundingVolume.reshape(ngl::Vec4(-10, -10, -10), ngl::Vec4(10, 10, 10));
 
-    RenderObjectFactory::sRegisterObject("boid", Boid::sCreate);
-    RenderObjectFactory::sRegisterObject("obstacle", Obstacle::sCreate);
+    RenderObjectFactory::sRegisterObject("boid", createBoid);
+    RenderObjectFactory::sRegisterObject("obstacle", createObstacle);
 
     Flock* flock = new Flock(*this);
     m_flocks.push_back(flock);
 
-    int meshId = m_meshes.size();
+    unsigned meshId = m_meshes.size();
+    m_meshMap["boid"] = meshId;
     Mesh* mesh = new BoidMesh(meshId);
     m_meshes.push_back(mesh);
 
     unsigned nBoids = 10;
-    m_renderObjects.resize(nBoids, NULL);
-    for (unsigned i = 0; i < m_renderObjects.size(); ++i)
+    m_renderObjects.reserve(nBoids);
+    addBoids(nBoids, 0);
+}
+
+
+void Scene::addBoids(unsigned _nCnt, unsigned _flockId)
+{
+    assert(m_flocks.size() > _flockId);
+
+    Flock* flock = m_flocks[_flockId];
+    Mesh* mesh = m_meshes[ m_meshMap["boid"] ];
+    for (unsigned i = 0; i < _nCnt; ++i)
     {
         Boid* boid = (Boid*)RenderObjectFactory::sCreateObject("boid", mesh);
-        m_renderObjects[i] = boid;
+        m_renderObjects.push_back(boid);
         flock->joinBoid(boid);
     }
 }
-
 
 void Scene::update(ngl::Real _deltaT)
 {
@@ -75,4 +90,41 @@ const std::vector<Mesh*>& Scene::getMeshes() const
 const AABB& Scene::getBoundingVolume() const
 {
     return m_boundingVolume;
+}
+
+
+//====================================== utility functions =============================================
+
+
+RenderObject *createBoid(const Mesh *_mesh)
+{
+    static unsigned boidCnt = 0;
+
+    ngl::Vec4 v = utils::genRandPointOnSphere(1.0);
+    v.m_w = 0;
+//    v *= utils::randf(5, 8);
+//    ngl::Vec4 p = utils::genRandPointInBox(-10.0, 10.0);
+    ngl::Vec4 p = ngl::Vec4(0, 0, 0);
+    Boid* boid = new Boid(_mesh, -1);
+    boid->setPosition(p);
+    boid->setMass(1.0);
+    boid->setMaxSpeed(2.0);
+    boid->setMaxTurningAngle(ngl::PI / 4);
+    boid->setVelocity(v);
+
+    boid->setPanicDistance(1.0);
+    boid->setNeighbourhoodDistance(1.0);
+    boid->setNeighbourhoodFOV(ngl::PI);
+    boid->setObstacleLookupDistance(20.0);
+
+    boidCnt++;
+
+    return boid;
+}
+
+RenderObject* createObstacle(const Mesh* _mesh)
+{
+    ngl::Transformation t;
+    t.setPosition(utils::genRandPointInBox(10.0, 10.0));
+    return new Obstacle(_mesh, -1, t);
 }

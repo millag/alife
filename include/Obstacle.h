@@ -17,16 +17,7 @@ public:
 
     ~Obstacle() { }
 
-    void update(ngl::Real _deltaT)
-    { }
-
-    static RenderObject* sCreate(const Mesh* _mesh)
-    {
-        ngl::Transformation t;
-        t.setPosition(utils::genRandPointInBox(10.0, 10.0));
-
-        return new Obstacle(_mesh, -1, t);
-    }
+    void update(ngl::Real _deltaT) { }
 };
 
 #endif // OBSTACLE_H

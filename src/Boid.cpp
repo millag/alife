@@ -59,34 +59,8 @@ bool Boid::isInNeighbourhood(const MovingObject &_so) const
     return (distSqr <= getNeighbourhoodDistanceSqr()) && (getHeadingDir().dot(dir) > cos(m_neighbourhoodFOV));
 }
 
-RenderObject *Boid::sCreate(const Mesh *_mesh)
-{
-    static unsigned boidCnt = 0;
 
-    ngl::Vec4 v = utils::genRandPointOnSphere(1.0);
-    v.m_w = 0;
-//    v *= utils::randf(5, 8);
-//    ngl::Vec4 p = utils::genRandPointInBox(-10.0, 10.0);
-    ngl::Vec4 p = ngl::Vec4(0, 0, 0);
-    Boid* boid = new Boid(_mesh, -1);
-    boid->m_position = p;
-    boid->setMass(1.0);
-    boid->setMaxSpeed(2.0);
-    boid->setMaxTurningAngle(ngl::PI / 4);
-    boid->setVelocity(v);
-
-    boid->setPanicDistance(1.0);
-    boid->setNeighbourhoodDistance(1.0);
-    boid->setNeighbourhoodFOV(ngl::PI);
-    boid->setObstacleLookupDistance(20.0);
-
-    boidCnt++;
-
-    return boid;
-}
-
-
-void Boid::update(ngl::Real _deltaT)
-{
-    MovingObject::update(_deltaT);
-}
+//void Boid::update(ngl::Real _deltaT)
+//{
+//    MovingObject::update(_deltaT);
+//}

@@ -32,9 +32,8 @@ public:
 
     bool isInNeighbourhood(const MovingObject &_so) const;
 
-    static RenderObject *sCreate(const Mesh* _mesh);
 
-    virtual void update(ngl::Real _deltaT);
+//    virtual void update(ngl::Real _deltaT);
 
 protected:
     ngl::Real m_neighbourhoodDist;

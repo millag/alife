@@ -10,10 +10,11 @@ public:
     AABB();
     AABB(const ngl::Vec4& _vmin,  const ngl::Vec4& _vmax);
 
-    ngl::Real getBoundingRadius() const { return m_boundingRadius; }
-    ngl::Vec4 getBottomLeft() const { return m_vmin; }
-    ngl::Vec4 getTopRight() const { return m_vmax; }
+    const ngl::Vec4& getBottomLeft() const { return m_vmin; }
+    const ngl::Vec4& getTopRight() const { return m_vmax; }
+
     ngl::Vec4 getCenter() const { return (m_vmin + m_vmax) / 2; }
+    ngl::Real getBoundingRadius() const { return m_boundingRadius; }
     ngl::Real getWidth() const { return m_dimetions.m_x; }
     ngl::Real getHeight() const { return m_dimetions.m_y; }
     ngl::Real getDepth() const { return m_dimetions.m_z; }
