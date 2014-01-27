@@ -2,11 +2,6 @@
 #include <cstdlib>
 #include "ngl/Util.h"
 
-template<class T>
-T utils::clamp(T v, T a, T b)
-{
-    return std::max(a, std::min(v, b));
-}
 
 ngl::Real utils::randf(ngl::Real _min, ngl::Real _max) {
     return _min + (_max - _min) * ((ngl::Real)std::rand() / RAND_MAX);
@@ -29,8 +24,8 @@ ngl::Vec4 utils::genRandPointOnSphere(ngl::Real _radius, const ngl::Vec4& _cente
     return ngl::Vec4(x, y, z) + _center;
 }
 
-// generate with uniform distribution
-ngl::Vec4 utils::genRandPointInCircle(ngl::Real _radius, const ngl::Vec4& _center)
+// generate with uniform distribution - thank you http://mathworld.wolfram.com
+ngl::Vec4 utils::genRandPointOnDisk(ngl::Real _radius, const ngl::Vec4& _center)
 {
     ngl::Real theta = randf() * ngl::PI * 2;
     ngl::Real r = std::sqrt(randf()) * _radius;
@@ -56,6 +51,22 @@ void utils::truncate(ngl::Vec4& io_v, ngl::Real _maxLength)
         io_v.normalize();
         io_v *= _maxLength;
     }
+}
+
+ngl::Vec4 utils::faceforward(const ngl::Vec4& _n, const ngl::Vec4& _v)
+{
+    ngl::Vec4 normal = _n;
+    return (_v.dot(normal) > 0)? normal.negate() : normal;
+}
+
+ngl::Vec4 utils::reflect(const ngl::Vec4& _v, const ngl::Vec4& _n)
+{
+    assert(_n.lengthSquared() > C_ERR);
+
+    ngl::Vec4 normal = faceforward(_n, _v);
+    normal.normalize();
+
+    return _v - normal * 2 * _v.dot(normal);
 }
 
 bool utils::isInsideVolume(const ngl::Vec4& _p, const AABB& _volume)

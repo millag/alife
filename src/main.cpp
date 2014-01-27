@@ -7,6 +7,8 @@
 
 #include <map>
 
+void test();
+
 int main(int argc, char **argv)
 {
     QGuiApplication app(argc, argv);
@@ -18,6 +20,10 @@ int main(int argc, char **argv)
     return app.exec();
 }
 
+//void test()
+//{
+//    std::cout << 122 % 1 << std::endl;
+//}
 
 
 

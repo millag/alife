@@ -147,4 +147,24 @@ protected:
     ngl::Real calcWeight(const Boid* _boid, const ngl::Vec4& _steerForce);
 };
 
+
+class ObstacleAvoidance : public Rule
+{
+public:
+    ObstacleAvoidance(IObstacleServant* _servant, ngl::Real _priority = 1.0, ngl::Real _weight = 1.0):
+        Rule(_servant, _priority, _weight), m_flee(ngl::Vec4())
+    { }
+
+    IObstacleServant& getServant() const;
+    ngl::Vec4 getForce(const Boid* _boid);
+
+protected:
+    Flee m_flee;
+
+    ngl::Real getPosibleCollisionPoint(const Boid* _boid, const Obstacle* _obstacle);
+    ngl::Real raySphereIntersection(ngl::Vec4 rayPos, ngl::Vec4 rayDir, ngl::Vec4 spherePos, ngl::Real sphereRadius) const;
+    ngl::Real calcWeight(const Boid* _boid, const ngl::Vec4& _steerForce);
+};
+
+
 #endif // RULES_H

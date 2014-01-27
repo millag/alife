@@ -33,13 +33,14 @@ protected:
     ngl::Real m_size;
     unsigned m_divisions;
     unsigned m_divisionsSqr;
+    ngl::Real m_cellSize;
     AABB m_volume;
 
     std::vector<Cell> m_cells;
     std::vector<Boid*> m_objects;
 
-    unsigned findCellIdx(const ngl::Vec4& _pos, int& o_i, int& o_j, int& o_k) const;
-    unsigned calcIdx(int _i, int _j, int _k) const;
+    unsigned findCellIdx(const ngl::Vec4& _pos, unsigned& o_i, unsigned& o_j, unsigned &o_k) const;
+    unsigned calcIdx(unsigned _i, unsigned _j, unsigned _k) const;
     void findTestCells(const ngl::Vec4& _pos, ngl::Real _dist, std::vector<unsigned>& o_testCells) const;
 };
 

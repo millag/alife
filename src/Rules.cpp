@@ -1,4 +1,5 @@
 #include "Rules.h"
+#include <limits>
 
 void Rule::setPriority(ngl::Real _p)
 {
@@ -69,14 +70,27 @@ INeighboursServant &Separation::getServant() const
 
 ngl::Vec4 Separation::getForce(const Boid *_boid)
 {
-    const std::vector<Boid *> &neighbours = getServant().getNeighbours(_boid);
+    std::vector<Boid*> neighbours;
+    getServant().getNeighbours(_boid, neighbours);
+
     ngl::Vec4 steerForce(0,0,0,0);
 
      typedef std::vector<Boid*>::const_iterator BIter;
      for (BIter it = neighbours.begin(); it != neighbours.end(); ++it)
      {
-         m_flee.setTarget((*it)->getPosition());
-         steerForce += m_flee.getForce(_boid);
+         Boid* other = (*it);
+         ngl::Vec4 v = _boid->getPosition() - other->getPosition();
+         if (v.length() < other->getBoundingRadius()  + _boid->getPanicDistance())
+         {
+             ngl::Vec4 target = other->getPosition();
+             if (v.length() > other->getBoundingRadius())
+             {
+                 v.normalize();
+                 target += v * other->getBoundingRadius();
+             }
+             m_flee.setTarget(target);
+             steerForce += m_flee.getForce(_boid);
+         }
      }
 
      utils::truncate(steerForce, _boid->getMaxSpeed());
@@ -97,7 +111,9 @@ INeighboursServant& Alignment::getServant() const
 
 ngl::Vec4 Alignment::getForce(const Boid *_boid)
 {
-    const std::vector<Boid *> &neighbours = getServant().getNeighbours(_boid);
+    std::vector<Boid*> neighbours;
+    getServant().getNeighbours(_boid, neighbours);
+
     ngl::Vec4 steerForce(0,0,0,0);
 
     typedef std::vector<Boid*>::const_iterator BIter;
@@ -131,7 +147,9 @@ INeighboursServant &Cohesion::getServant() const
 
 ngl::Vec4 Cohesion::getForce(const Boid *_boid)
 {
-    const std::vector<Boid *> &neighbours = getServant().getNeighbours(_boid);
+    std::vector<Boid*> neighbours;
+    getServant().getNeighbours(_boid, neighbours);
+
     ngl::Vec4 steerForce(0,0,0,0);
     ngl::Vec4 massCenter(0,0,0,1);
     typedef std::vector<Boid*>::const_iterator BIter;
@@ -210,23 +228,149 @@ INeighboursServant &Wander::getServant() const
 
 ngl::Vec4 Wander::getForce(const Boid *_boid)
 {
-    const std::vector<Boid *> &neighbours = getServant().getNeighbours(_boid);
+    std::vector<Boid*> neighbours;
+    getServant().getNeighbours(_boid, neighbours);
+
     ngl::Vec4 steerForce(0,0,0,0);
 
-//    if (neighbours.size() != 0)
-//    {
-//        return steerForce;
-//    }
-
-//    FIX: calculation of next target position
+    if (neighbours.size() != 0)
+    {
+        return steerForce;
+    }
     steerForce += _boid->getHeadingDir() * m_wanderDist + m_target * m_wanderRadius;
     utils::truncate(steerForce, _boid->getMaxSpeed());
-    m_target = m_target + utils::genRandPointOnSphere(std::sin(m_jitterAngle));
+
+
+//    calculate next target position
+    ngl::Real theta = utils::randf() * m_jitterAngle;
+    ngl::Real phi = utils::randf() * m_jitterAngle;
+    ngl::Real x = std::cos(phi)*std::cos(theta);
+    ngl::Real y = std::cos(phi)*std::sin(theta);
+    ngl::Real z = std::sin(phi);
+
+    m_target = m_target + ngl::Vec4(x, y, z, 0);
     m_target.normalize();
+
     return  steerForce * calcWeight(_boid, steerForce)* m_weight;
 }
 
 ngl::Real Wander::calcWeight(const Boid *_boid, const ngl::Vec4 &_steerForce)
+{
+    return 1.0;
+}
+
+
+IObstacleServant &ObstacleAvoidance::getServant() const
+{
+    return *(dynamic_cast<IObstacleServant*>(m_servant));
+}
+
+ngl::Vec4 ObstacleAvoidance::getForce(const Boid *_boid)
+{
+    assert(_boid != NULL);
+    ngl::Vec4 steerForce(0,0,0,0);
+
+    std::vector<Obstacle *> obstacles;
+    getServant().getObstacles(_boid, obstacles);
+    if (!obstacles.size())
+    {
+        return steerForce;
+    }
+
+     typedef std::vector<Obstacle*>::const_iterator OIter;
+     for (OIter it = obstacles.begin(); it != obstacles.end(); ++it)
+     {
+         Obstacle* obstacle = (*it);
+         ngl::Vec4 v = _boid->getPosition() - obstacle->getPosition();
+         if (v.length() < obstacle->getBoundingRadius()  + _boid->getObstacleLookupDistance())
+         {
+             ngl::Vec4 target = obstacle->getPosition();
+             if (v.length() > obstacle->getBoundingRadius())
+             {
+                 v.normalize();
+                 target += v * obstacle->getBoundingRadius();
+             }
+             m_flee.setTarget(target);
+             steerForce += m_flee.getForce(_boid);
+         }
+     }
+
+     utils::truncate(steerForce, _boid->getMaxSpeed());
+     return steerForce * calcWeight(_boid, steerForce) * m_weight;
+}
+
+//ngl::Vec4 ObstacleAvoidance::getForce(const Boid *_boid)
+//{
+//    assert(_boid != NULL);
+//    ngl::Vec4 steerForce(0,0,0,0);
+
+//    std::vector<Obstacle *> obstacles;
+//    getServant().getObstacles(_boid, obstacles);
+//    if (!obstacles.size())
+//    {
+//        return steerForce;
+//    }
+
+//    ngl::Real nearestDistSqr = std::numeric_limits<ngl::Real>::max();
+//    ngl::Vec4 nearestIPos(0,0,0);
+//    ngl::Vec4 nearestINormal(0,0,0,0);
+//    Obstacle* nearest = NULL;
+
+//    ngl::Transformation transform = _boid->getTransform();
+//    ngl::Mat4 m = transform.getMatrix();
+//    ngl::Mat4 toLocalTransform = m.inverse();
+
+//    typedef std::vector<Obstacle*>::const_iterator OIter;
+//    for (OIter it = obstacles.begin(); it != obstacles.end(); ++it)
+//    {
+//        Obstacle* obstacle = (*it);
+//        assert(obstacle != NULL);
+
+//        ngl::Vec4 localPos = obstacle->getPosition() * toLocalTransform;
+////        test if obstacle is behind boid
+//        if (localPos.m_z < 0)
+//        {
+//            continue;
+//        }
+
+////        test if obstacle is overlapping with boid's bounding cylinder
+//        ngl::Real inflatedRadius = obstacle->getBoundingRadius() + _boid->getBoundingRadius();
+//        if (ngl::Vec4(localPos.m_x, localPos.m_y, 0, 0).length() > inflatedRadius)
+//        {
+//            continue;
+//        }
+
+//        ngl::Vec4 iPos;
+//        ngl::Vec4 iNormal;
+//        ngl::Real distSqr = obstacle->findPossibleCollisionPoint(_boid, iPos, iNormal);
+//        if (distSqr < nearestDistSqr)
+//        {
+//            nearestDistSqr = distSqr;
+//            nearestIPos = iPos;
+//            nearestINormal = iNormal;
+//            nearest = obstacle;
+//        }
+//    }
+
+//    if (nearest == NULL)
+//    {
+//        return steerForce;
+//    }
+
+//    ngl::Vec4 v = nearestIPos - _boid->getPosition();
+//    steerForce += utils::reflect(v, nearestINormal);
+////    apply breaking force if too close to obstacle
+//    if (v.lengthSquared() < _boid->getPanicDistanceSqr())
+//    {
+//        ngl::Real breakingWeight = (1 - v.length() / _boid->getPanicDistance());
+//        steerForce -= _boid->getHeadingDir() * _boid->getCurrentSpeed() * breakingWeight;
+//    }
+
+//    ngl::Real distWeight = ( 1  - v.length() / _boid->getObstacleLookupDistance());
+//    return  steerForce * distWeight * m_weight;
+//}
+
+ngl::Real ObstacleAvoidance::calcWeight(const Boid *_boid, const ngl::Vec4 &_steerForce)
 {
     return 1.0;
 }

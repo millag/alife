@@ -10,14 +10,20 @@ public:
     Obstacle(const Mesh* _mesh, int _shaderId, const ngl::Transformation& _transform = ngl::Transformation()):
         MovingObject(_mesh, _shaderId, _transform)
     { }
+    virtual ~Obstacle() { }
 
-    Obstacle(const Obstacle& _obstacle):
-        MovingObject(_obstacle)
+    virtual ngl::Real findPossibleCollisionPoint(const MovingObject* _object, ngl::Vec4& o_iPoint, ngl::Vec4& o_iNormal) const = 0;
+};
+
+class SphericalObstacle : public Obstacle
+{
+public:
+    SphericalObstacle(const Mesh* _mesh, int _shaderId, const ngl::Transformation& _transform = ngl::Transformation()):
+        Obstacle(_mesh, _shaderId, _transform)
     { }
+    ~SphericalObstacle() { }
 
-    ~Obstacle() { }
-
-    void update(ngl::Real _deltaT) { }
+    ngl::Real findPossibleCollisionPoint(const MovingObject* _object, ngl::Vec4& o_iPoint, ngl::Vec4& o_iNormal) const;
 };
 
 #endif // OBSTACLE_H

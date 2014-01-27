@@ -35,7 +35,7 @@ Scene::~Scene()
 
 void Scene::initialize()
 {
-    m_boundingVolume.reshape(ngl::Vec4(-10, -10, -10), ngl::Vec4(10, 10, 10));
+    m_boundingVolume.reshape(ngl::Vec4(-30, -30, -30), ngl::Vec4(30, 30, 30));
 
     RenderObjectFactory::sRegisterObject("boid", createBoid);
     RenderObjectFactory::sRegisterObject("obstacle", createObstacle);
@@ -48,9 +48,22 @@ void Scene::initialize()
     Mesh* mesh = new BoidMesh(meshId);
     m_meshes.push_back(mesh);
 
-    unsigned nBoids = 10;
+    unsigned nBoids = 100;
     m_renderObjects.reserve(nBoids);
     addBoids(nBoids, 0);
+
+    meshId = m_meshes.size();
+    m_meshMap["obstacle"] = meshId;
+    mesh = new ObstacleMesh(meshId);
+    m_meshes.push_back(mesh);
+
+    unsigned nObstacles = 5;
+    for (unsigned i = 0; i < nObstacles; ++i)
+    {
+        Obstacle* obstacle = (Obstacle*)RenderObjectFactory::sCreateObject("obstacle", mesh);
+        m_renderObjects.push_back(obstacle);
+        m_obstacles.push_back(obstacle);
+    }
 }
 
 
@@ -100,22 +113,25 @@ RenderObject *createBoid(const Mesh *_mesh)
 {
     static unsigned boidCnt = 0;
 
-    ngl::Vec4 v = utils::genRandPointOnSphere(1.0);
-    v.m_w = 0;
 //    v *= utils::randf(5, 8);
 //    ngl::Vec4 p = utils::genRandPointInBox(-10.0, 10.0);
-    ngl::Vec4 p = ngl::Vec4(0, 0, 0);
+
     Boid* boid = new Boid(_mesh, -1);
+
+    ngl::Vec4 v = utils::genRandPointOnSphere(1.0) * 1;
+    v.m_w = 0;
+    ngl::Vec4 p = ngl::Vec4(0, 0, 0);
+
     boid->setPosition(p);
     boid->setMass(1.0);
     boid->setMaxSpeed(2.0);
     boid->setMaxTurningAngle(ngl::PI / 4);
     boid->setVelocity(v);
 
-    boid->setPanicDistance(1.0);
-    boid->setNeighbourhoodDistance(1.0);
+    boid->setPanicDistance(2.0);
+    boid->setNeighbourhoodDistance(3.0);
     boid->setNeighbourhoodFOV(ngl::PI);
-    boid->setObstacleLookupDistance(20.0);
+    boid->setObstacleLookupDistance(10.0);
 
     boidCnt++;
 
@@ -124,7 +140,10 @@ RenderObject *createBoid(const Mesh *_mesh)
 
 RenderObject* createObstacle(const Mesh* _mesh)
 {
+    ngl::Real scale = utils::randf(2.0, 10.0);
     ngl::Transformation t;
-    t.setPosition(utils::genRandPointInBox(10.0, 10.0));
-    return new Obstacle(_mesh, -1, t);
+    t.setPosition(utils::genRandPointInBox(-30.0, 30.0));
+    t.setScale(scale, scale, scale);
+
+    return new SphericalObstacle(_mesh, -1, t);
 }

@@ -118,26 +118,65 @@ BoidMesh::BoidMesh(unsigned _id):Mesh(_id)
 
 ObstacleMesh::ObstacleMesh(unsigned _id):Mesh(_id)
 {
-    ngl::Vec4 v[] = {
-                         ngl::Vec4(0,   1, 1),
-                         ngl::Vec4(0,   0,-1),
-                         ngl::Vec4(-0.5,0, 1),
+    const unsigned divu = 10;
+    const unsigned divv = 5;
+    const ngl::Real radius = 1.0;
 
-                         ngl::Vec4(0,   1, 1),
-                         ngl::Vec4(0,   0,-1),
-                         ngl::Vec4(0.5, 0, 1),
+    m_vertices.push_back(ngl::Vec4(0,radius,0));
+    for (unsigned i = 1; i < divv; i++)
+    {
+        ngl::Real y = std::cos( ((float)i / divv) * ngl::PI ) * radius;
+        ngl::Real r = std::sin( ((float)i / divv) * ngl::PI ) * radius;
 
-                         ngl::Vec4(0,   1, 1),
-                         ngl::Vec4(0,   0, 1.5),
-                         ngl::Vec4(-0.5,0, 1),
+        for (unsigned j = 0; j < divu; j++)
+        {
+            ngl::Real x = std::cos( ((float)j / divu) * ngl::PI * 2) * r;
+            ngl::Real z = std::sin( ((float)j / divu) * ngl::PI * 2) * r;
+            m_vertices.push_back(ngl::Vec4(x,y,z));
+        }
+    }
+    m_vertices.push_back(ngl::Vec4(0,-radius,0));
 
-                         ngl::Vec4(0,   1, 1),
-                         ngl::Vec4(0,   0, 1.5),
-                         ngl::Vec4(0.5, 0, 1)
-                    };
-    unsigned vi[] = {0,1,2,5,4,3,8,7,6,9,10,11};
-    m_vertices.insert(m_vertices.begin(), v, v + 12);
-    m_vindices.insert(m_vindices.begin(), vi, vi + 12);
+    for (unsigned j = 0; j < divu; j++)
+    {
+        unsigned idxp1 = 0;
+        unsigned idxc1 = j % divu + 1;
+        unsigned idxc2 = (j + 1) % divu + 1;
+
+        m_vindices.push_back(idxp1);
+        m_vindices.push_back(idxc2);
+        m_vindices.push_back(idxc1);
+
+        idxc1 = (divv - 2) * divu + j % divu + 1;
+        idxc2 = (divv - 2) * divu + (j + 1) % divu + 1;
+        idxp1 = (divv - 1) * divu + 1;
+
+        m_vindices.push_back(idxc1);
+        m_vindices.push_back(idxp1);
+        m_vindices.push_back(idxc2);
+
+    }
+
+    for (unsigned i = 1; i < divv - 1; i++)
+    {
+        for (unsigned j = 0; j < divu; j++)
+        {
+            unsigned idxp1 = (i - 1) * divu + j % divu + 1;
+            unsigned idxp2 = (i - 1) * divu + (j + 1) % divu + 1;
+            unsigned idxc1 = i * divu + j % divu + 1;
+            unsigned idxc2 = i * divu + (j + 1) % divu + 1;
+
+            m_vindices.push_back(idxp1);
+            m_vindices.push_back(idxp2);
+            m_vindices.push_back(idxc1);
+
+
+            m_vindices.push_back(idxc2);
+            m_vindices.push_back(idxc1);
+            m_vindices.push_back(idxp2);
+        }
+    }
+
     calcNormals( FLAT );
     calcAABB();
 }

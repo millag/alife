@@ -2,7 +2,7 @@
 #define BOID_H
 
 #include "Utils.h"
-#include "BaseObjects.h"
+#include "Obstacle.h"
 
 class Rule;
 
@@ -30,8 +30,8 @@ public:
     ngl::Real getObstacleLookupDistanceSqr() const { return m_obstacleLookupDist * m_obstacleLookupDist; }
     void setObstacleLookupDistance(ngl::Real _d);
 
-    bool isInNeighbourhood(const MovingObject &_so) const;
-
+    bool isInNeighbourhood(const Boid &_boid) const;
+    bool isInRange(const Obstacle &_obstacle) const;
 
 //    virtual void update(ngl::Real _deltaT);
 

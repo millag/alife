@@ -134,51 +134,6 @@ void NGLWindow::createBoundingVolume()
                                      m_scene->getBoundingVolume().getHeight(),
                                      m_scene->getBoundingVolume().getDepth());
     m_boundingVolume->setDrawMode(GL_LINE);
-
-//    create reference grid
-    ngl::VAOPrimitives *prim=ngl::VAOPrimitives::instance();
-    prim->createLineGrid("grid", 10, 10, 10);
-
-//    ngl::Vec4 vmin = m_scene->getBoundingVolume().getBottomLeft();
-//    ngl::Vec4 vmax = m_scene->getBoundingVolume().getTopRight();
-//    std::vector<ngl::Vec4> v(8);
-//    v[0] = ngl::Vec4(vmin.m_x, vmin.m_y, vmin.m_z);
-//    v[1] = ngl::Vec4(vmax.m_x, vmin.m_y, vmin.m_z);
-//    v[2] = ngl::Vec4(vmax.m_x, vmax.m_y, vmin.m_z);
-//    v[3] = ngl::Vec4(vmin.m_x, vmax.m_y, vmin.m_z);
-
-//    v[4] = ngl::Vec4(vmin.m_x, vmin.m_y, vmax.m_z);
-//    v[5] = ngl::Vec4(vmax.m_x, vmin.m_y, vmax.m_z);
-//    v[6] = ngl::Vec4(vmax.m_x, vmax.m_y, vmax.m_z);
-//    v[7] = ngl::Vec4(vmin.m_x, vmax.m_y, vmax.m_z);
-
-//    unsigned vidx[] = { 0, 2, 3, 2, 0, 1,
-//                        0, 3, 4, 4, 3, 7,
-//                        4, 7, 6, 4, 6, 5,
-//                        3, 2, 7, 7, 2, 6,
-//                        2, 1, 5, 2, 5, 6,
-//                        1, 0, 4, 1, 4, 5 };
-//    std::vector<unsigned> vi(vidx, vidx + 24);
-
-
-
-//    ngl::VertexArrayObject* vao = ngl::VertexArrayObject::createVOA(GL_LINE);
-//    m_VAOList.push_back(vao);
-//    vao->bind();
-
-//    // in this case we are going to set our data as the vertices above
-//    // now we set the attribute pointer to be 0 (as this matches vertIn in our shader)
-//    vao->setIndexedData(v.size() * sizeof(ngl::Vec4),
-//                        v[0].m_x,
-//                        vi.size(),
-//                        &vi[0],
-//                        GL_UNSIGNED_INT);
-
-//    vao->setVertexAttributePointer(0,4,GL_FLOAT,0,0);
-//    vao->setNumIndices(vi.size());
-
-//    // now unbind
-//    vao->unbind();
 }
 
 void NGLWindow::initialize()
@@ -231,9 +186,9 @@ void NGLWindow::initialize()
     if ( m_scene == NULL )
         return;
 
-//    ngl::Vec3 eye(m_scene->getBoundingVolume().getBottomLeft().m_x / 2, m_scene->getBoundingVolume().getTopRight().m_y / 2, -m_scene->getBoundingVolume().getBottomLeft().m_z);
-//    eye += eye * 2;
-    ngl::Vec3 eye(0, 20, -20);
+    ngl::Vec3 eye(m_scene->getBoundingVolume().getBottomLeft().m_x / 2, m_scene->getBoundingVolume().getTopRight().m_y / 2, -m_scene->getBoundingVolume().getBottomLeft().m_z);
+    eye += eye * 2;
+//    ngl::Vec3 eye(0, 20, -20);
     ngl::Vec3 at(0,0,0);
     ngl::Vec3 up(0,1,0);
     m_camera = new ngl::Camera(eye, at, up);
@@ -258,6 +213,10 @@ void NGLWindow::initialize()
     buildVAOs();
     // build VAO to render scene bounding volume
     createBoundingVolume();
+    // create reference grid
+    ngl::VAOPrimitives *prim=ngl::VAOPrimitives::instance();
+    prim->createLineGrid("grid", 10, 10, 10);
+//    prim->createSphere("sphere", 5, 10);
 }
 
 
@@ -340,6 +299,7 @@ void NGLWindow::render()
     ngl::VAOPrimitives *prim = ngl::VAOPrimitives::instance();
     loadMatricesToShader();
     prim->draw("grid");
+//    prim->draw("sphere");
     m_boundingVolume->draw();
 }
 

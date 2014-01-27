@@ -2,6 +2,7 @@
 #define SERVANT_H
 
 #include "Boid.h"
+#include "Obstacle.h"
 
 class IServant
 {
@@ -13,14 +14,14 @@ class INeighboursServant : public IServant
 {
 public:
     virtual ~INeighboursServant() { }
-    virtual const std::vector<Boid*>& getNeighbours(const Boid* _boid) = 0;
+    virtual void getNeighbours(const Boid* _boid, std::vector<Boid*>& o_neighbours) = 0;
 };
 
 class IObstacleServant : public IServant
 {
 public:
     virtual ~IObstacleServant() { }
-    virtual void getObstacles() = 0;
+    virtual void getObstacles(const Boid* _boid, std::vector<Obstacle*>& o_obstacles) = 0;
 };
 
 #endif // SERVANT_H

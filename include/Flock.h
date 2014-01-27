@@ -5,7 +5,7 @@
 #include "Integrator.h"
 #include "Servant.h"
 
-class Flock : public INeighboursServant
+class Flock : public INeighboursServant, public IObstacleServant
 {
 public:
     Flock(const Scene& _scene);
@@ -15,8 +15,8 @@ public:
     void joinBoid(Boid* _boid);
     void update(ngl::Real _deltaT);
 
-    const std::vector<Boid*>& getNeighbours(const Boid* _boid) { return m_neighbours; }
-
+    void getNeighbours(const Boid* _boid, std::vector<Boid*>& o_neighbours);
+    void getObstacles(const Boid* _boid, std::vector<Obstacle*>& o_obstacles);
 protected:
 //    reference to scene object
 //    note: this is needed to query for near by obstacles/scene bounds/ect.
@@ -29,9 +29,11 @@ protected:
     std::vector<Rule*> m_rules;
 
     std::vector<Boid*> m_neighbours;
+    std::vector<Obstacle*> m_obstacles;
 
     void initialize();
     void findNeighbours(const Boid *_boid, std::vector<Boid *> &o_neighbours) const;
+    void findObstacles(const Boid *_boid, std::vector<Obstacle*> &o_obstacles) const;
 private:
     Flock();
 };

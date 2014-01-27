@@ -48,9 +48,9 @@ void Boid::setObstacleLookupDistance(ngl::Real _d)
     m_obstacleLookupDist = _d + ((m_mesh == NULL)? 0 : m_mesh->getBoundingRadius());
 }
 
-bool Boid::isInNeighbourhood(const MovingObject &_so) const
+bool Boid::isInNeighbourhood(const Boid &_boid) const
 {
-    ngl::Vec4 dir = _so.getPosition() - getPosition();
+    ngl::Vec4 dir = _boid.getPosition() - getPosition();
     ngl::Real distSqr = dir.lengthSquared();
     if (distSqr < utils::C_ERR)
         return true;
@@ -59,8 +59,13 @@ bool Boid::isInNeighbourhood(const MovingObject &_so) const
     return (distSqr <= getNeighbourhoodDistanceSqr()) && (getHeadingDir().dot(dir) > cos(m_neighbourhoodFOV));
 }
 
+bool Boid::isInRange(const Obstacle &_obstacle) const
+{
+    ngl::Vec4 dir = _obstacle.getPosition() - getPosition();
+    ngl::Real distSqr = dir.lengthSquared();
+    if (distSqr < utils::C_ERR)
+        return true;
 
-//void Boid::update(ngl::Real _deltaT)
-//{
-//    MovingObject::update(_deltaT);
-//}
+    dir.normalize();
+    return (distSqr <= getObstacleLookupDistanceSqr()) && (getHeadingDir().dot(dir) > cos(m_neighbourhoodFOV));
+}

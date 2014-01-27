@@ -54,6 +54,7 @@ public:
         m_acceleration = _a;
     }
 
+    ngl::Real getCurrentSpeed() const { return m_velocity.length(); }
     ngl::Real getMaxSpeed() const { return m_maxSpeed; }
     ngl::Real getMaxSpeedSqr() const { return m_maxSpeedSqr; }
     void  setMaxSpeed(ngl::Real _ms)
@@ -89,7 +90,7 @@ protected:
     ngl::Real m_maxSpeedSqr;
 //    measured in radians
     ngl::Real m_maxTurningAngle;
-//    measured in kg
+//    measured in grams??
     ngl::Real m_mass;
 //    normalized vector pointing the direction the object is facing in global space coords
     ngl::Vec4 m_headingDir;
