@@ -1,6 +1,10 @@
 #include "Flock.h"
 #include <algorithm>
+
 #include "Grid.h"
+#include "Integrator.h"
+
+
 
 Flock::Flock():m_scene(Scene()) { }
 
@@ -11,7 +15,6 @@ Flock::Flock(const Scene& _scene):m_scene(_scene)
 
 Flock::~Flock()
 {
-    delete m_integrator;
     typedef std::vector<Rule*>::const_iterator RIter;
     for (RIter it = m_rules.begin(); it != m_rules.end(); ++it)
     {
@@ -21,7 +24,7 @@ Flock::~Flock()
 
 void Flock::initialize()
 {
-    m_integrator = new Integrator();
+    Integrator::sGetInstance();
 
     m_rules.reserve(20);
     m_rules.push_back( new ObstacleAvoidance(this, 1.0, 1.0) );
@@ -56,22 +59,17 @@ void Flock::update(ngl::Real _deltaT)
     {
         Boid* boid = (*it);
 
-        m_neighbours.clear();
-        findNeighbours(boid, m_neighbours);
-        m_obstacles.clear();
-        findObstacles(boid, m_obstacles);
-
         typedef std::vector<Rule*>::const_iterator RIter;
-        int i = 0;
 
         const std::vector<Rule*>& rules = boid->getRules();
-        std::vector<ngl::Vec4> forces(rules.size());
+        std::vector<ngl::Vec4> forces;
+        forces.reserve(rules.size());
         for (RIter it = rules.begin(); it != rules.end(); ++it)
         {
-            forces[i++] = (*it)->getForce(boid);
+            forces.push_back( (*it)->getForce(boid) );
         }
 
-        ngl::Vec4 acc = m_integrator->calculateAcceleration(boid, forces, _deltaT);
+        ngl::Vec4 acc = Integrator::sGetInstance().calculateAcceleration(boid, forces, _deltaT);
         boid->setAcceleration(acc);
     }
 
@@ -84,7 +82,27 @@ void Flock::update(ngl::Real _deltaT)
     }
 }
 
-// use grid
+void Flock::getNeighbours(const Boid *_boid, std::vector<Boid *> &o_neighbours)
+{
+    assert(_boid != NULL);
+    if (m_neighboursMap.count(_boid) == 0)
+    {
+        findNeighbours(_boid, m_neighboursMap[_boid]);
+    }
+    o_neighbours.insert(o_neighbours.begin(), m_neighboursMap[_boid].begin(), m_neighboursMap[_boid].end());
+}
+
+void Flock::getObstacles(const Boid *_boid, std::vector<Obstacle *> &o_obstacles)
+{
+    assert(_boid != NULL);
+    if (m_obstaclesMap.count(_boid) == 0)
+    {
+        findObstacles(_boid, m_obstaclesMap[_boid]);
+    }
+    o_obstacles.insert(o_obstacles.begin(), m_obstaclesMap[_boid].begin(), m_obstaclesMap[_boid].end());
+}
+
+// grid used
 void Flock::findNeighbours(const Boid *_boid, std::vector<Boid *> &o_neighbours) const
 {
     assert(_boid != NULL);
@@ -117,14 +135,4 @@ void Flock::findObstacles(const Boid *_boid, std::vector<Obstacle*> &o_obstacles
             o_obstacles.push_back((*it));
         }
     }
-}
-
-void Flock::getNeighbours(const Boid *_boid, std::vector<Boid *> &o_neighbours)
-{
-    o_neighbours.insert(o_neighbours.begin(), m_neighbours.begin(), m_neighbours.end());
-}
-
-void Flock::getObstacles(const Boid *_boid, std::vector<Obstacle *> &o_obstacles)
-{
-    o_obstacles.insert(o_obstacles.begin(), m_obstacles.begin(), m_obstacles.end());
 }

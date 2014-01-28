@@ -1,7 +1,11 @@
 #include "Scene.h"
+
+#include "ngl/Util.h"
+
 #include "Factory.h"
 #include "Obstacle.h"
 #include "Flock.h"
+
 
 RenderObject* createBoid(const Mesh *_mesh);
 RenderObject* createObstacle(const Mesh* _mesh);
@@ -57,7 +61,7 @@ void Scene::initialize()
     Mesh* mesh = new BoidMesh(meshId);
     m_meshes.push_back(mesh);
 
-    unsigned nBoids = 2000;
+    unsigned nBoids = 100;
     m_renderObjects.reserve(nBoids);
     addBoids(nBoids, 0);
 

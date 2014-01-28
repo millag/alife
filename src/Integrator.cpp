@@ -1,5 +1,13 @@
 #include "Integrator.h"
 
+
+Integrator* Integrator::sIntegrator = new Integrator();
+
+const Integrator& Integrator::sGetInstance()
+{
+    return *sIntegrator;
+}
+
 ngl::Vec4 Integrator::calculateAcceleration(const Boid* _boid, const std::vector<ngl::Vec4>& _forces, ngl::Real _deltaT) const
 {
     ngl::Vec4 acc(0,0,0,0);
