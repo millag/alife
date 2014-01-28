@@ -11,7 +11,7 @@ bool compareRules(Rule *_lhs, Rule *_rhs)
 }
 
 
-Boid::Boid(const Mesh *_mesh, int _shaderId, const ngl::Transformation &_transform):
+Boid::Boid(const Mesh *_mesh, int _shaderId, const ngl::Mat4 &_transform):
     MovingObject(_mesh, _shaderId, _transform)
 {
     m_neighbourhoodDist = (m_mesh == NULL)? 0 : m_mesh->getBoundingRadius();

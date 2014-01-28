@@ -9,7 +9,7 @@ class Rule;
 class Boid : public MovingObject
 {
 public:
-    Boid(const Mesh* _mesh, int _shaderId, const ngl::Transformation& _transform = ngl::Transformation());
+    Boid(const Mesh* _mesh, int _shaderId, const ngl::Mat4 &_transform = ngl::Mat4());
     virtual ~Boid();
 
     const std::vector<Rule*>& getRules() const { return m_rules; }

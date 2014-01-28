@@ -170,5 +170,5 @@ RenderObject* createObstacle(const Mesh* _mesh)
     t.setPosition(utils::genRandPointInBox(-30.0, 30.0));
     t.setScale(scale, scale, scale);
 
-    return new SphericalObstacle(_mesh, -1, t);
+    return new SphericalObstacle(_mesh, -1, t.getMatrix());
 }

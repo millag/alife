@@ -8,20 +8,27 @@
 class RenderObject
 {
 public:
-    RenderObject(const Mesh* _mesh, int _shaderId, const ngl::Transformation& _transform = ngl::Transformation());
+    RenderObject(const Mesh* _mesh, int _shaderId, const ngl::Mat4& _transform = ngl::Mat4());
     virtual ~RenderObject();
 
     unsigned getMeshId() const;
     const Mesh* getMesh() const;
     void setMesh(const Mesh* _mesh);
-    const ngl::Transformation& getTransform() const { return m_transform; }
-    void setTransform(const ngl::Transformation& _transform);
 
+    const ngl::Mat4& getTransform() const { return m_transform; }
     ngl::Real getBoundingRadius() const { return m_boundingRadius; }
+
+    ngl::Transformation getTransformation() const
+    {
+        ngl::Transformation t;
+        t.setMatrix(m_transform);
+        return t;
+    }
 
 protected:
     const Mesh* m_mesh;
-    ngl::Transformation m_transform;
+    ngl::Mat4 m_transform;
+
     int m_shaderId;
     ngl::Real m_boundingRadius;
 
@@ -34,7 +41,7 @@ private:
 class MovingObject : public RenderObject
 {
 public:
-    MovingObject(const Mesh* _mesh, int _shaderId, const ngl::Transformation& _transform = ngl::Transformation());
+    MovingObject(const Mesh* _mesh, int _shaderId, const ngl::Mat4& _transform = ngl::Mat4());
     virtual ~MovingObject() { }
 
     const ngl::Vec4& getHeadingDir() const;

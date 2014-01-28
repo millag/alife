@@ -7,7 +7,7 @@
 RenderObject::RenderObject():m_mesh(NULL),m_shaderId(-1),m_boundingRadius(0)
 { }
 
-RenderObject::RenderObject(const Mesh* _mesh, int _shaderId, const ngl::Transformation& _transform):
+RenderObject::RenderObject(const Mesh* _mesh, int _shaderId, const ngl::Mat4 &_transform):
     m_mesh(_mesh),m_transform(_transform),m_shaderId(_shaderId)
 {
     calcBoundingRadius();
@@ -32,12 +32,6 @@ void RenderObject::setMesh(const Mesh* _mesh)
     calcBoundingRadius();
 }
 
-void RenderObject::setTransform(const ngl::Transformation& _transform)
-{
-    m_transform = _transform;
-    calcBoundingRadius();
-}
-
 // FIX:: following calculations are wrong when applying shear to the object
 void RenderObject::calcBoundingRadius()
 {
@@ -47,23 +41,22 @@ void RenderObject::calcBoundingRadius()
         return;
     }
 
-    const ngl::Mat4& transform = m_transform.getMatrix();
-    ngl::Vec4 rx =  transform * (utils::C_EX  * m_mesh->getBoundingRadius());
-    ngl::Vec4 ry =  transform * (utils::C_EY  * m_mesh->getBoundingRadius());
-    ngl::Vec4 rz =  transform * (utils::C_EZ  * m_mesh->getBoundingRadius());
+    ngl::Vec4 rx =  (utils::C_EX  * m_mesh->getBoundingRadius()) * m_transform;
+    ngl::Vec4 ry =  (utils::C_EY  * m_mesh->getBoundingRadius()) * m_transform;
+    ngl::Vec4 rz =  (utils::C_EZ  * m_mesh->getBoundingRadius()) * m_transform;
 
     m_boundingRadius = std::sqrt(std::max(rx.lengthSquared(), std::max(ry.lengthSquared(), rz.lengthSquared())));
 }
 
 
 
-MovingObject::MovingObject(const Mesh *_mesh, int _shaderId, const ngl::Transformation &_transform):
+MovingObject::MovingObject(const Mesh *_mesh, int _shaderId, const ngl::Mat4 &_transform):
     RenderObject(_mesh, _shaderId, _transform)
 {
-    m_headingDir = m_transform.getMatrix().getBackVector();
+    m_headingDir = m_transform.getBackVector();
     m_headingDir.normalize();
     assert(m_headingDir.m_w == 0);
-    m_position = m_transform.getPosition();
+    m_position = ngl::Vec4() * m_transform;
 
     m_maxSpeedSqr = m_maxSpeed = 0;
     m_maxTurningAngle = 0;
@@ -109,7 +102,7 @@ void MovingObject::updateHeading()
         m_headingDir.normalize();
     }
 
-    ngl::Vec4 yaxis = ngl::Vec4(m_transform.getMatrix().getUpVector());
+    ngl::Vec4 yaxis = ngl::Vec4(m_transform.getUpVector());
     yaxis.m_w = 0;
     assert(yaxis.lengthSquared() > utils::C_ERR);
     ngl::Vec4 zaxis = m_headingDir;
@@ -126,9 +119,12 @@ void MovingObject::updateHeading()
                 yaxis.m_x, yaxis.m_y, yaxis.m_z, 0,
                 zaxis.m_x, zaxis.m_y, zaxis.m_z, 0,
                 m_position.m_x, m_position.m_y, m_position.m_z, 1);
-    m_transform.setMatrix(m);
+    m_transform = m;
 
 }
+
+
+
 //    ngl::Vec4 localHeading =  m_headingDir;
 //    localHeading.normalize();
 //    ngl::Vec4 projectedHeading(localHeading.m_x, 0, localHeading.m_z, 0);

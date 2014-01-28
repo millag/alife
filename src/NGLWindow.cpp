@@ -280,7 +280,7 @@ void NGLWindow::render()
         m_transformStack.pushTransform();
         {
 //            place object in world
-            m_transformStack.setCurrent(ro->getTransform());
+            m_transformStack.setCurrent(ro->getTransformation());
             loadMatricesToShader();
 
 //            actual draw

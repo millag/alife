@@ -1,9 +1,63 @@
 #include "Flock.h"
 #include <algorithm>
+#include <boost/thread.hpp>
+#include <boost/thread/detail/thread_group.hpp>
 
 #include "Grid.h"
 #include "Integrator.h"
 
+struct Callable
+{
+    ngl::Real m_deltaT;
+    Boid* m_boid;
+    Integrator m_integrator;
+
+    void operator()()
+    {
+        typedef std::vector<Rule*>::const_iterator RIter;
+
+        const std::vector<Rule*>& rules = m_boid->getRules();
+        std::vector<ngl::Vec4> forces;
+        forces.reserve(rules.size());
+        for (RIter it = rules.begin(); it != rules.end(); ++it)
+        {
+            forces.push_back( (*it)->getForce(m_boid) );
+        }
+
+        ngl::Vec4 acc = m_integrator.calculateAcceleration(m_boid, forces, m_deltaT);
+        m_boid->setAcceleration(acc);
+    }
+};
+
+//struct Callable
+//{
+//    typedef std::vector<Boid*>::const_iterator BIter;
+//    ngl::Real m_deltaT;
+//    BIter m_begin;
+//    BIter m_end;
+//    Integrator m_integrator;
+
+//    void operator()()
+//    {
+//        for (BIter it = m_begin; it != m_end; ++it)
+//        {
+//            Boid* boid = (*it);
+
+//            typedef std::vector<Rule*>::const_iterator RIter;
+
+//            const std::vector<Rule*>& rules = boid->getRules();
+//            std::vector<ngl::Vec4> forces;
+//            forces.reserve(rules.size());
+//            for (RIter it = rules.begin(); it != rules.end(); ++it)
+//            {
+//                forces.push_back( (*it)->getForce(boid) );
+//            }
+
+//            ngl::Vec4 acc = m_integrator.calculateAcceleration(boid, forces, m_deltaT);
+//            boid->setAcceleration(acc);
+//        }
+//    }
+//};
 
 
 Flock::Flock():m_scene(Scene()) { }
@@ -24,8 +78,6 @@ Flock::~Flock()
 
 void Flock::initialize()
 {
-    Integrator::sGetInstance();
-
     m_rules.reserve(20);
     m_rules.push_back( new ObstacleAvoidance(this, 1.0, 1.0) );
     m_rules.push_back( new Separation(this, 1.0, 1.0) );
@@ -54,33 +106,64 @@ void Flock::joinBoid(Boid *_boid)
 
 void Flock::update(ngl::Real _deltaT)
 {
-    typedef std::vector<Boid*>::iterator BIter;
+//    boost::thread_group group;
+    typedef std::vector<Boid*>::const_iterator BIter;
     for (BIter it = m_boids.begin(); it != m_boids.end(); ++it)
     {
-        Boid* boid = (*it);
+        assert((*it) != NULL);
 
-        typedef std::vector<Rule*>::const_iterator RIter;
-
-        const std::vector<Rule*>& rules = boid->getRules();
-        std::vector<ngl::Vec4> forces;
-        forces.reserve(rules.size());
-        for (RIter it = rules.begin(); it != rules.end(); ++it)
-        {
-            forces.push_back( (*it)->getForce(boid) );
-        }
-
-        ngl::Vec4 acc = Integrator::sGetInstance().calculateAcceleration(boid, forces, _deltaT);
-        boid->setAcceleration(acc);
+        Callable func;
+        func.m_deltaT = _deltaT;
+        func.m_boid = (*it);
+//        group.create_thread(func);
+        func();
     }
+//    group.join_all();
 
     m_neighboursMap.clear();
     m_obstaclesMap.clear();
 
+    typedef std::vector<Boid*>::const_iterator BIter;
     for (BIter it = m_boids.begin(); it != m_boids.end(); ++it)
     {
         (*it)->update(_deltaT);
     }
 }
+
+
+//void Flock::update(ngl::Real _deltaT)
+//{
+//    m_neighboursMap.clear();
+//    m_obstaclesMap.clear();
+
+//    size_t nMaxThreads = boost::thread::hardware_concurrency();
+//    nMaxThreads = std::min(m_boids.size(), nMaxThreads);
+//    std::cout << "Max threads: " << nMaxThreads << std::endl;
+
+//    unsigned nCnt = m_boids.size() / nMaxThreads;
+//    int reminder = m_boids.size() % nMaxThreads;
+//    std::cout << "boids per thread: " << nCnt << " , Reminder: " << reminder << std::endl;
+
+//    unsigned idx = 0;
+//    boost::thread_group group;
+//    for (unsigned i = 0; i < nMaxThreads; ++i)
+//    {
+//        Callable func;
+//        func.m_deltaT = _deltaT;
+//        func.m_begin = m_boids.begin() + idx;
+//        idx += nCnt + (((reminder) > 0)? 1 : 0);
+//        reminder--;
+//        func.m_end = m_boids.begin() + idx;
+//        group.create_thread(func);
+//    }
+//    group.join_all();
+
+//    typedef std::vector<Boid*>::const_iterator BIter;
+//    for (BIter it = m_boids.begin(); it != m_boids.end(); ++it)
+//    {
+//        (*it)->update(_deltaT);
+//    }
+//}
 
 void Flock::getNeighbours(const Boid *_boid, std::vector<Boid *> &o_neighbours)
 {
@@ -90,6 +173,7 @@ void Flock::getNeighbours(const Boid *_boid, std::vector<Boid *> &o_neighbours)
         findNeighbours(_boid, m_neighboursMap[_boid]);
     }
     o_neighbours.insert(o_neighbours.begin(), m_neighboursMap[_boid].begin(), m_neighboursMap[_boid].end());
+//    findNeighbours(_boid, o_neighbours);
 }
 
 void Flock::getObstacles(const Boid *_boid, std::vector<Obstacle *> &o_obstacles)
@@ -100,6 +184,7 @@ void Flock::getObstacles(const Boid *_boid, std::vector<Obstacle *> &o_obstacles
         findObstacles(_boid, m_obstaclesMap[_boid]);
     }
     o_obstacles.insert(o_obstacles.begin(), m_obstaclesMap[_boid].begin(), m_obstaclesMap[_boid].end());
+//    findObstacles(_boid, o_obstacles);
 }
 
 // grid used
@@ -136,3 +221,34 @@ void Flock::findObstacles(const Boid *_boid, std::vector<Obstacle*> &o_obstacles
         }
     }
 }
+
+
+//void Flock::update(ngl::Real _deltaT)
+//{
+//    typedef std::vector<Boid*>::iterator BIter;
+//    for (BIter it = m_boids.begin(); it != m_boids.end(); ++it)
+//    {
+//        Boid* boid = (*it);
+
+//        typedef std::vector<Rule*>::const_iterator RIter;
+
+//        const std::vector<Rule*>& rules = boid->getRules();
+//        std::vector<ngl::Vec4> forces;
+//        forces.reserve(rules.size());
+//        for (RIter it = rules.begin(); it != rules.end(); ++it)
+//        {
+//            forces.push_back( (*it)->getForce(boid) );
+//        }
+
+//        ngl::Vec4 acc = Integrator::sGetInstance().calculateAcceleration(boid, forces, _deltaT);
+//        boid->setAcceleration(acc);
+//    }
+
+//    m_neighboursMap.clear();
+//    m_obstaclesMap.clear();
+
+//    for (BIter it = m_boids.begin(); it != m_boids.end(); ++it)
+//    {
+//        (*it)->update(_deltaT);
+//    }
+//}

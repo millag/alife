@@ -219,6 +219,7 @@ Wander::Wander(INeighboursServant *_servant, ngl::Real _priority, ngl::Real _wei
                 Rule(_servant, _priority, _weight), m_wanderDist(_wanderDist), m_wanderRadius(_wanderRadius),m_jitterAngle(_jitterAngle)
 {
     m_target = utils::genRandPointOnSphere();
+    m_target.m_w = 0;
 }
 
 INeighboursServant &Wander::getServant() const
@@ -237,18 +238,18 @@ ngl::Vec4 Wander::getForce(const Boid *_boid)
     {
         return steerForce;
     }
-    steerForce += _boid->getHeadingDir() * m_wanderDist + m_target * m_wanderRadius;
+
+    steerForce += _boid->getHeadingDir() * m_wanderDist + m_target * _boid->getTransform() * m_wanderRadius;
     utils::truncate(steerForce, _boid->getMaxSpeed());
 
-
-//    calculate next target position
+//    calculate next target vector
     ngl::Real theta = utils::randf() * m_jitterAngle;
     ngl::Real phi = utils::randf() * m_jitterAngle;
     ngl::Real x = std::cos(phi)*std::cos(theta);
     ngl::Real y = std::cos(phi)*std::sin(theta);
     ngl::Real z = std::sin(phi);
 
-    m_target = m_target + ngl::Vec4(x, y, z, 0);
+    m_target = m_target + (ngl::Vec4(x, y, z, 0) - utils::C_EX);
     m_target.normalize();
 
     return  steerForce * calcWeight(_boid, steerForce)* m_weight;
@@ -316,8 +317,7 @@ ngl::Vec4 ObstacleAvoidance::getForce(const Boid *_boid)
 //    ngl::Vec4 nearestINormal(0,0,0,0);
 //    Obstacle* nearest = NULL;
 
-//    ngl::Transformation transform = _boid->getTransform();
-//    ngl::Mat4 m = transform.getMatrix();
+//    ngl::Mat4 m =  _boid->getCurrentMatrix();
 //    ngl::Mat4 toLocalTransform = m.inverse();
 
 //    typedef std::vector<Obstacle*>::const_iterator OIter;

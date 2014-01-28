@@ -7,7 +7,7 @@
 class Obstacle : public MovingObject
 {
 public:
-    Obstacle(const Mesh* _mesh, int _shaderId, const ngl::Transformation& _transform = ngl::Transformation()):
+    Obstacle(const Mesh* _mesh, int _shaderId, const ngl::Mat4& _transform = ngl::Mat4()):
         MovingObject(_mesh, _shaderId, _transform)
     { }
     virtual ~Obstacle() { }
@@ -18,7 +18,7 @@ public:
 class SphericalObstacle : public Obstacle
 {
 public:
-    SphericalObstacle(const Mesh* _mesh, int _shaderId, const ngl::Transformation& _transform = ngl::Transformation()):
+    SphericalObstacle(const Mesh* _mesh, int _shaderId, const ngl::Mat4& _transform = ngl::Mat4()):
         Obstacle(_mesh, _shaderId, _transform)
     { }
     ~SphericalObstacle() { }
