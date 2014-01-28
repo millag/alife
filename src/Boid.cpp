@@ -56,7 +56,7 @@ bool Boid::isInNeighbourhood(const Boid &_boid) const
         return true;
 
     dir.normalize();
-    return (distSqr <= getNeighbourhoodDistanceSqr()) && (getHeadingDir().dot(dir) > cos(m_neighbourhoodFOV));
+    return (distSqr < getNeighbourhoodDistanceSqr()) && (getHeadingDir().dot(dir) > cos(m_neighbourhoodFOV));
 }
 
 bool Boid::isInRange(const Obstacle &_obstacle) const

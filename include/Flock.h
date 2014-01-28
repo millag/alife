@@ -28,6 +28,9 @@ protected:
 //    note: rules are created and owned by the flock itself so it must clean them up
     std::vector<Rule*> m_rules;
 
+    std::map< Boid*, std::vector<Boid*> > m_neighboursMap;
+    std::map< Boid*, std::vector<Obstacle*> > m_obstaclesMap;
+
     std::vector<Boid*> m_neighbours;
     std::vector<Obstacle*> m_obstacles;
 

@@ -9,6 +9,7 @@
 #include "ngl/Light.h"
 #include "ngl/Camera.h"
 
+#include "Grid.h"
 #include "Obstacle.h"
 
 //QUESTION: what to do when there is cycle with include headers
@@ -25,8 +26,8 @@ public:
     const std::vector<Mesh*>& getMeshes() const;
 
 //   TODO: add to grid holding obstacles and boids;
-    const std::vector<Obstacle*>& getObstacles() const { return m_obstacles; }
-
+    const std::vector<Obstacle*>& getObstacles() const;
+    const Grid& getGrid() const;
 
     void initialize();
     void update(ngl::Real _deltaT);
@@ -36,6 +37,7 @@ private:
     std::vector<Flock*> m_flocks;
     std::vector<Obstacle*> m_obstacles;
     AABB m_boundingVolume;
+    Grid* m_grid;
 
     std::vector<RenderObject*> m_renderObjects;
     std::vector<Mesh*> m_meshes;

@@ -409,7 +409,7 @@ void NGLWindow::keyPressEvent(QKeyEvent *_event)
         case Qt::Key_M :
         {
             assert(m_scene != NULL);
-            m_scene->addBoids();
+            m_scene->addBoids(100, 0);
             break;
         }
         default : break;

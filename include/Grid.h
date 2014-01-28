@@ -4,11 +4,6 @@
 #include <list>
 #include "Boid.h"
 
-struct Cell {
-public:
-    std::list<unsigned> m_objectIdxList;
-};
-
 class Grid {
 
 public:
@@ -30,6 +25,12 @@ public:
     void update();
 
 protected:
+
+    struct Cell
+    {
+        std::list<unsigned> m_objectIdxList;
+    };
+
     ngl::Real m_size;
     unsigned m_divisions;
     unsigned m_divisionsSqr;
@@ -42,6 +43,7 @@ protected:
     unsigned findCellIdx(const ngl::Vec4& _pos, unsigned& o_i, unsigned& o_j, unsigned &o_k) const;
     unsigned calcIdx(unsigned _i, unsigned _j, unsigned _k) const;
     void findTestCells(const ngl::Vec4& _pos, ngl::Real _dist, std::vector<unsigned>& o_testCells) const;
+    bool isSearchCorrect(const std::vector<Boid*>& _objects, const ngl::Vec4& _pos,  ngl::Real _distSqr) const;
 };
 
 #endif // GRID_H

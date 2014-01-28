@@ -31,11 +31,20 @@ Scene::~Scene()
     for (GIter it = m_meshes.begin(); it != m_meshes.end(); ++it) {
         delete (*it);
     }
+
+    if (m_grid)
+    {
+        delete m_grid;
+    }
 }
 
 void Scene::initialize()
 {
+//    initialize scene bounding volume
     m_boundingVolume.reshape(ngl::Vec4(-30, -30, -30), ngl::Vec4(30, 30, 30));
+//    initialize space partition grid
+    m_grid = new Grid(m_boundingVolume.getBoundingRadius() * 2, 10);
+    m_grid->initialize();
 
     RenderObjectFactory::sRegisterObject("boid", createBoid);
     RenderObjectFactory::sRegisterObject("obstacle", createObstacle);
@@ -48,7 +57,7 @@ void Scene::initialize()
     Mesh* mesh = new BoidMesh(meshId);
     m_meshes.push_back(mesh);
 
-    unsigned nBoids = 1000;
+    unsigned nBoids = 2000;
     m_renderObjects.reserve(nBoids);
     addBoids(nBoids, 0);
 
@@ -78,6 +87,7 @@ void Scene::addBoids(unsigned _nCnt, unsigned _flockId)
         Boid* boid = (Boid*)RenderObjectFactory::sCreateObject("boid", mesh);
         m_renderObjects.push_back(boid);
         flock->joinBoid(boid);
+        m_grid->addObject(boid);
     }
 }
 
@@ -88,6 +98,7 @@ void Scene::update(ngl::Real _deltaT)
     {
         (*it)->update(_deltaT);
     }
+    m_grid->update();
 }
 
 const std::vector<RenderObject *> &Scene::getRenderObjects() const
@@ -105,6 +116,16 @@ const AABB& Scene::getBoundingVolume() const
     return m_boundingVolume;
 }
 
+const std::vector<Obstacle*>& Scene::getObstacles() const
+{
+    return m_obstacles;
+}
+
+const Grid& Scene::getGrid() const
+{
+    assert(m_grid != NULL);
+    return *m_grid;
+}
 
 //====================================== utility functions =============================================
 
@@ -131,7 +152,7 @@ RenderObject *createBoid(const Mesh *_mesh)
     boid->setPanicDistance(2.0);
     boid->setNeighbourhoodDistance(3.0);
     boid->setNeighbourhoodFOV(ngl::PI);
-    boid->setObstacleLookupDistance(10.0);
+    boid->setObstacleLookupDistance(5.0);
 
     boidCnt++;
 

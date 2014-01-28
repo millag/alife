@@ -39,10 +39,12 @@ void Grid::addObject(Boid *_object)
 
     unsigned i,j,k;
     unsigned cellIdx = findCellIdx(_object->getPosition(), i, j, k);
+    assert(cellIdx < m_cells.size());
     Cell& cell = m_cells[cellIdx];
 
     unsigned objectIdx = m_objects.size();
     m_objects.push_back(_object);
+    assert(objectIdx < m_objects.size());
     cell.m_objectIdxList.push_back(objectIdx);
 }
 
@@ -58,6 +60,7 @@ void Grid::addObjects(const std::vector<Boid *> _objects)
 
 void Grid::findObjectsWithinDistance(const ngl::Vec4& _pos, ngl::Real _dist, std::vector<Boid*>& o_objects) const
 {
+    assert(o_objects.size() == 0);
     ngl::Real distSqr = _dist * _dist;
 
     std::vector<unsigned> testCells;
@@ -81,57 +84,36 @@ void Grid::findObjectsWithinDistance(const ngl::Vec4& _pos, ngl::Real _dist, std
             }
         }
     }
+
+//    quick check for correctness
+//    assert(isSearchCorrect(o_objects, _pos, distSqr));
 }
 
 unsigned Grid::findCellIdx(const ngl::Vec4 &_pos, unsigned& o_i, unsigned& o_j, unsigned &o_k) const
 {
-//    if (!utils::isInsideVolume(_pos, m_volume))
-//    {
-////      TODO: handle objects outside grid effectively - currently all stored in first cell
-//        o_i = o_j = o_k = -1;
-//        return 0;
-//    }
-
     ngl::Vec4 v = _pos - m_volume.getBottomLeft();
-    o_i = utils::clamp((unsigned)std::floor(v.m_x / m_cellSize), 0u, m_divisions - 1);
-    o_j = utils::clamp((unsigned)std::floor(v.m_y / m_cellSize), 0u, m_divisions - 1);
-    o_k = utils::clamp((unsigned)std::floor(v.m_z / m_cellSize), 0u, m_divisions - 1);
+    o_i = utils::clamp(std::floor(v.m_x / m_cellSize), (ngl::Real)0.0, (ngl::Real)(m_divisions - 1));
+    o_j = utils::clamp(std::floor(v.m_y / m_cellSize), (ngl::Real)0.0, (ngl::Real)(m_divisions - 1));
+    o_k = utils::clamp(std::floor(v.m_z / m_cellSize), (ngl::Real)0.0, (ngl::Real)(m_divisions - 1));
     return calcIdx(o_i, o_j, o_k);
 }
 
 unsigned Grid::calcIdx(unsigned _i, unsigned _j, unsigned _k) const
 {
-//    if (_i < 0 || _j < 0 || _k < 0)
-//    {
-////      TODO: handle objects outside grid effectively - currently all stored in first cell
-//        return 0;
-//    }
     return _k * m_divisionsSqr + _i * m_divisions + _j;
 }
 
 void Grid::findTestCells(const ngl::Vec4 &_pos, ngl::Real _dist, std::vector<unsigned>& o_testCells) const
 {
     ngl::Vec4 v(_dist, _dist, _dist);
-    AABB searchVolume(_pos - v, _pos + v);
+    ngl::Vec4 vmin = _pos - v;
+    ngl::Vec4 vmax = _pos + v;
 
     unsigned iMin,jMin,kMin;
-    unsigned cellMinIdx = findCellIdx(searchVolume.getBottomLeft(), iMin, jMin, kMin);
-    if (cellMinIdx == 0)
-    {
-        iMin = jMin = kMin = 0;
-        o_testCells.push_back(0);
-    }
+    findCellIdx(vmin, iMin, jMin, kMin);
 
     unsigned iMax,jMax,kMax;
-    unsigned cellMaxIdx = findCellIdx(searchVolume.getTopRight(), iMax, jMax, kMax);
-    if (cellMaxIdx == 0)
-    {
-        iMax = jMax = kMax = m_divisions - 1;
-        if (cellMinIdx != 0)
-        {
-            o_testCells.push_back(0);
-        }
-    }
+    findCellIdx(vmax, iMax, jMax, kMax);
 
     for (unsigned k = kMin; k <= kMax; k++)
     {
@@ -143,8 +125,12 @@ void Grid::findTestCells(const ngl::Vec4 &_pos, ngl::Real _dist, std::vector<uns
             }
         }
     }
+//    cell containing _pos should be included at least
+    assert(o_testCells.size() > 0);
 }
 
+// FIX: needs refactoring
+// there is bug in here - if a boid is moved to a cell that is not checked yet, it will be checked twice
 void Grid::update()
 {
     unsigned i,j,k;
@@ -153,8 +139,10 @@ void Grid::update()
     for(CIter it  = m_cells.begin(); it != m_cells.end(); it++)
     {
         Cell& cell = (*it);
+
         typedef std::list<unsigned>::iterator IIter;
-        for (IIter it2 = cell.m_objectIdxList.begin(); it2 != cell.m_objectIdxList.end(); it2++)
+        IIter it2 = cell.m_objectIdxList.begin();
+        while (it2 != cell.m_objectIdxList.end())
         {
             unsigned objectIdx = (*it2);
             assert(objectIdx < m_objects.size());
@@ -164,13 +152,29 @@ void Grid::update()
             assert(cellIdx < m_cells.size());
             if ( cellIdx == idx)
             {
+                ++it2;
                 continue;
             }
 
-            cell.m_objectIdxList.erase(it2);
+            it2 = cell.m_objectIdxList.erase(it2);
             m_cells[cellIdx].m_objectIdxList.push_back(objectIdx);
         }
-
         ++idx;
     }
+}
+
+
+bool Grid::isSearchCorrect(const std::vector<Boid*>& _objects, const ngl::Vec4& _pos,  ngl::Real _distSqr) const
+{
+    std::vector<Boid *> neighbours;
+    typedef std::vector<Boid*>::const_iterator BIter;
+    for (BIter it = m_objects.begin(); it != m_objects.end(); ++it)
+    {
+        if (((*it)->getPosition() - _pos).lengthSquared() < _distSqr)
+        {
+            neighbours.push_back((*it));
+        }
+    }
+
+    return (neighbours.size() == _objects.size());
 }

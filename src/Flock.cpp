@@ -1,5 +1,6 @@
 #include "Flock.h"
 #include <algorithm>
+#include "Grid.h"
 
 Flock::Flock():m_scene(Scene()) { }
 
@@ -74,17 +75,23 @@ void Flock::update(ngl::Real _deltaT)
         boid->setAcceleration(acc);
     }
 
+    m_neighboursMap.clear();
+    m_obstaclesMap.clear();
+
     for (BIter it = m_boids.begin(); it != m_boids.end(); ++it)
     {
         (*it)->update(_deltaT);
     }
 }
 
-//FIX: use grid
+// use grid
 void Flock::findNeighbours(const Boid *_boid, std::vector<Boid *> &o_neighbours) const
 {
+    assert(_boid != NULL);
+    std::vector<Boid *> neighbours;
+    m_scene.getGrid().findObjectsWithinDistance(_boid->getPosition(), _boid->getNeighbourhoodDistance(), neighbours);
     typedef std::vector<Boid*>::const_iterator BIter;
-    for (BIter it = m_boids.begin(); it != m_boids.end(); ++it)
+    for (BIter it = neighbours.begin(); it != neighbours.end(); ++it)
     {
         if ((*it) == _boid)
         {

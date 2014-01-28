@@ -7,15 +7,18 @@
 
 #include <map>
 
+#include <boost/thread.hpp>
+
 //void test()
 //{
-//    std::cout << 122 % 1 << std::endl;
+//    std::cout << "Hello World!" << std::endl;
 //}
 
 
 int main(int argc, char **argv)
 {
-//    test();
+//    boost::thread thread1(test);
+//    thread1.join();
 //    return 0;
 
     QGuiApplication app(argc, argv);
