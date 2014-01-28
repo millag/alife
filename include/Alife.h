@@ -3,6 +3,8 @@
 
 #include <QObject>
 #include <QTimer>
+#include <QElapsedTimer>
+
 #include "NGLWindow.h"
 
 class Alife : public QObject
@@ -19,11 +21,15 @@ signals:
     
 public slots:
     void update();
-    
+    void refresh();
+
 private:
     Scene* m_scene;
     NGLWindow* m_window;
-    QTimer* m_timer;
+
+    QTimer m_updateTimer;
+    QTimer m_refreshTimer;
+    QElapsedTimer m_chronometer;
 };
 
 #endif // ALIFE_H

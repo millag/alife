@@ -15,8 +15,10 @@ T clamp(T v, T a, T b)
 
 
 const static unsigned short C_SEC = 1000;
-const static unsigned short C_FPS = 60;
-const static unsigned short C_UPDATERATE = C_SEC / C_FPS;
+const static unsigned short C_UPS = 30;
+const static unsigned short C_FPS = 30;
+const static unsigned short C_UPDATERATE = C_SEC / C_UPS;
+const static unsigned short C_REFRESHRATE = C_SEC / C_FPS;
 
 const static ngl::Real C_ERR = 0.000001;
 const static ngl::Vec4 C_EX(1,0,0,0);

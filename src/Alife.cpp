@@ -3,19 +3,18 @@
 #include <iostream>
 #include <QSurfaceFormat>
 #include "Utils.h"
+
 void initSurfaceContextFormat(QSurfaceFormat& _format);
 
 Alife::Alife(QObject *_parent) : QObject(_parent)
 {
     m_scene = new Scene();
     m_window = new NGLWindow();
-    m_timer = new QTimer(this);
 }
 
 Alife::~Alife()
 {
     delete m_scene;
-    delete m_timer;
 }
 
 void Alife::initialize()
@@ -34,7 +33,9 @@ void Alife::initialize()
     // we can now query the version to see if it worked
     std::cout<<"Profile is "<<format.majorVersion()<<" "<<format.minorVersion()<<"\n";
 
-    connect(m_timer, SIGNAL(timeout()), this, SLOT(update()));
+    connect(&m_updateTimer, SIGNAL(timeout()), this, SLOT(update()));
+    connect(&m_refreshTimer, SIGNAL(timeout()), this, SLOT(refresh()));
+
 }
 
 void Alife::go()
@@ -43,13 +44,20 @@ void Alife::go()
     m_window->resize(1024, 720);
     // and finally show
     m_window->show();
-    m_timer->start(utils::C_UPDATERATE);
+    m_updateTimer.start(utils::C_UPDATERATE);
+    m_refreshTimer.start(utils::C_REFRESHRATE);
+    m_chronometer.start();
 }
 
 void Alife::update()
 {
-    ngl::Real deltaT = 1.0 / utils::C_FPS;
+    std::cout << "UPS: " << utils::C_SEC / m_chronometer.elapsed() << std::endl;
+    ngl::Real deltaT = (float)m_chronometer.restart() / utils::C_SEC;
     m_scene->update(deltaT);
+}
+
+void Alife::refresh()
+{
     // re-draw GL
     m_window->renderLater();
 }

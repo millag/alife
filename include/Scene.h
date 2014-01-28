@@ -30,7 +30,7 @@ public:
 
     void initialize();
     void update(ngl::Real _deltaT);
-    void addBoids(unsigned _nCnt = 10, unsigned _flockId = 0);
+    void addBoids(unsigned _nCnt = 100, unsigned _flockId = 0);
 
 private:
     std::vector<Flock*> m_flocks;

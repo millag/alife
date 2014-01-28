@@ -48,7 +48,7 @@ void Scene::initialize()
     Mesh* mesh = new BoidMesh(meshId);
     m_meshes.push_back(mesh);
 
-    unsigned nBoids = 100;
+    unsigned nBoids = 1000;
     m_renderObjects.reserve(nBoids);
     addBoids(nBoids, 0);
 

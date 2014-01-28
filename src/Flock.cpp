@@ -22,16 +22,12 @@ void Flock::initialize()
 {
     m_integrator = new Integrator();
 
-//    m_rules.resize(2, NULL);
-//    m_rules[0] = new ObstacleAvoidance(this, 1.0, 1.0);
-//    m_rules[1] = new VolumeConstraint(m_scene.getBoundingVolume(), 0.4, 1.0);
-
-    m_rules.resize(5, NULL);
-    m_rules[0] = new ObstacleAvoidance(this, 1.0, 1.0);
-    m_rules[1] = new Separation(this, 1.0, 0.9);
-    m_rules[2] = new Alignment(this, 0.5, 0.5);
-    m_rules[3] = new Cohesion(this, 0.5, 0.4);
-    m_rules[4] = new VolumeConstraint(m_scene.getBoundingVolume(), 0.4, 1.0);
+    m_rules.reserve(20);
+    m_rules.push_back( new ObstacleAvoidance(this, 1.0, 1.0) );
+    m_rules.push_back( new Separation(this, 1.0, 1.0) );
+    m_rules.push_back( new Alignment(this, 0.5, 0.5) );
+    m_rules.push_back( new Cohesion(this, 0.5, 0.4) );
+    m_rules.push_back( new VolumeConstraint(m_scene.getBoundingVolume(), 0.4, 1.0) );
 }
 
 bool Flock::isInFlock(const Boid *_boid) const
