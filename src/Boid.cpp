@@ -36,10 +36,20 @@ void Boid::setNeighbourhoodDistance(ngl::Real _d)
     m_neighbourhoodDist = _d + ((m_mesh == NULL)? 0 : m_mesh->getBoundingRadius());
 }
 
+ngl::Real Boid::getPanicDistance() const
+{
+    return m_panicDist;
+}
+
 void Boid::setPanicDistance(ngl::Real _d)
 {
     assert(_d >= 0);
     m_panicDist = _d + ((m_mesh == NULL)? 0 : m_mesh->getBoundingRadius());
+}
+
+ngl::Real Boid::getObstacleLookupDistance() const
+{
+     return m_obstacleLookupDist * (1 + getCurrentSpeed() / getMaxSpeed() * 0.5);
 }
 
 void Boid::setObstacleLookupDistance(ngl::Real _d)
@@ -56,7 +66,8 @@ bool Boid::isInNeighbourhood(const Boid &_boid) const
         return true;
 
     dir.normalize();
-    return (distSqr < getNeighbourhoodDistanceSqr()) && (getHeadingDir().dot(dir) > cos(m_neighbourhoodFOV));
+    ngl::Real neighbourDistSqr = std::pow(getNeighbourhoodDistance() , 2);
+    return (distSqr < neighbourDistSqr) && (getHeadingDir().dot(dir) > cos(m_neighbourhoodFOV));
 }
 
 bool Boid::isInRange(const Obstacle &_obstacle) const
@@ -67,5 +78,6 @@ bool Boid::isInRange(const Obstacle &_obstacle) const
         return true;
 
     dir.normalize();
-    return (distSqr <= getObstacleLookupDistanceSqr()) && (getHeadingDir().dot(dir) > cos(m_neighbourhoodFOV));
+    ngl::Real lookUpDistSqr = std::pow(getObstacleLookupDistance() , 2);
+    return (distSqr <= lookUpDistSqr) && (getHeadingDir().dot(dir) > cos(m_neighbourhoodFOV));
 }

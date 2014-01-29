@@ -16,18 +16,15 @@ public:
     void setRules(const std::vector<Rule*>& _rules);
 
     ngl::Real getNeighbourhoodDistance() const { return m_neighbourhoodDist; }
-    ngl::Real getNeighbourhoodDistanceSqr() const { return m_neighbourhoodDist * m_neighbourhoodDist; }
     void setNeighbourhoodDistance(ngl::Real _d);
 
     ngl::Real getNeighbourhoodFOV() const { return m_neighbourhoodFOV; }
     void setNeighbourhoodFOV(ngl::Real _fov) { m_neighbourhoodFOV = _fov; }
 
-    ngl::Real getPanicDistance() const { return m_panicDist; }
-    ngl::Real getPanicDistanceSqr() const { return m_panicDist * m_panicDist; }
+    ngl::Real getPanicDistance() const;
     void setPanicDistance(ngl::Real _d);
 
-    ngl::Real getObstacleLookupDistance() const { return m_obstacleLookupDist; }
-    ngl::Real getObstacleLookupDistanceSqr() const { return m_obstacleLookupDist * m_obstacleLookupDist; }
+    ngl::Real getObstacleLookupDistance() const;
     void setObstacleLookupDistance(ngl::Real _d);
 
     bool isInNeighbourhood(const Boid &_boid) const;

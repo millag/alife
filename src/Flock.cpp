@@ -80,9 +80,9 @@ void Flock::initialize()
 {
     m_rules.reserve(20);
     m_rules.push_back( new ObstacleAvoidance(this, 1.0, 1.0) );
-    m_rules.push_back( new Separation(this, 1.0, 1.0) );
-    m_rules.push_back( new Alignment(this, 0.5, 0.5) );
-    m_rules.push_back( new Cohesion(this, 0.5, 0.4) );
+    m_rules.push_back( new Separation(this, 1.0, 0.7) );
+    m_rules.push_back( new Alignment(this, 0.5, 0.8) );
+    m_rules.push_back( new Cohesion(this, 0.5, 0.7) );
     m_rules.push_back( new VolumeConstraint(m_scene.getBoundingVolume(), 0.4, 1.0) );
 }
 

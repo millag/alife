@@ -61,7 +61,7 @@ void Scene::initialize()
     Mesh* mesh = new BoidMesh(meshId);
     m_meshes.push_back(mesh);
 
-    unsigned nBoids = 100;
+    unsigned nBoids = 1000;
     m_renderObjects.reserve(nBoids);
     addBoids(nBoids, 0);
 
@@ -143,20 +143,20 @@ RenderObject *createBoid(const Mesh *_mesh)
 
     Boid* boid = new Boid(_mesh, -1);
 
-    ngl::Vec4 v = utils::genRandPointOnSphere(1.0) * 1;
+    ngl::Vec4 v = utils::genRandPointOnSphere(1.0) * utils::randf(3, 6);
     v.m_w = 0;
     ngl::Vec4 p = ngl::Vec4(0, 0, 0);
 
     boid->setPosition(p);
     boid->setMass(1.0);
-    boid->setMaxSpeed(2.0);
+    boid->setMaxSpeed(6.0);
     boid->setMaxTurningAngle(ngl::PI / 4);
     boid->setVelocity(v);
 
-    boid->setPanicDistance(2.0);
-    boid->setNeighbourhoodDistance(3.0);
+    boid->setPanicDistance(3.0);
+    boid->setNeighbourhoodDistance(6.0);
     boid->setNeighbourhoodFOV(ngl::PI);
-    boid->setObstacleLookupDistance(5.0);
+    boid->setObstacleLookupDistance(8.0);
 
     boidCnt++;
 

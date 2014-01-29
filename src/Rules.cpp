@@ -1,6 +1,7 @@
 #include "Rules.h"
 #include <limits>
 
+
 void Rule::setPriority(ngl::Real _p)
 {
     assert( _p >= 0 && _p <= 1);
@@ -31,7 +32,8 @@ ngl::Vec4 Seek::getForce(const Boid *_boid)
 
 ngl::Real Seek::calcWeight(const Boid *_boid, const ngl::Vec4 &_steerForce)
 {
-    if (_steerForce.lengthSquared() > _boid->getPanicDistanceSqr())
+    ngl::Real panicDistSqr = std::pow(_boid->getPanicDistance(), 2);
+    if (_steerForce.lengthSquared() > panicDistSqr)
         return 1;
     return _steerForce.length() / _boid->getPanicDistance();
 }
@@ -54,7 +56,8 @@ ngl::Vec4 Flee::getForce(const Boid *_boid)
 
 ngl::Real Flee::calcWeight(const Boid *_boid, const ngl::Vec4 &_steerForce)
 {
-    if (_steerForce.lengthSquared() > _boid->getPanicDistanceSqr())
+    ngl::Real panicDistSqr = std::pow(_boid->getPanicDistance(), 2);
+    if (_steerForce.lengthSquared() > panicDistSqr)
         return 0;
     return 1 - _steerForce.length() / _boid->getPanicDistance();
 }
@@ -80,16 +83,18 @@ ngl::Vec4 Separation::getForce(const Boid *_boid)
      {
          Boid* other = (*it);
          ngl::Vec4 v = _boid->getPosition() - other->getPosition();
-         if (v.length() < other->getBoundingRadius()  + _boid->getPanicDistance())
+         ngl::Real dist = v.length();
+         if (dist < other->getBoundingRadius()  + _boid->getPanicDistance())
          {
-             ngl::Vec4 target = other->getPosition();
-             if (v.length() > other->getBoundingRadius())
+             if (dist < utils::C_ERR)
              {
+                 steerForce += utils::genRandPointOnSphere() * _boid->getMaxSpeed();
+             } else
+             {
+                 ngl::Real weight = std::max((ngl::Real)0, dist - other->getBoundingRadius()) / _boid->getPanicDistance();
                  v.normalize();
-                 target += v * other->getBoundingRadius();
+                 steerForce += v * _boid->getMaxSpeed() * (1 - weight);
              }
-             m_flee.setTarget(target);
-             steerForce += m_flee.getForce(_boid);
          }
      }
 
@@ -281,18 +286,21 @@ ngl::Vec4 ObstacleAvoidance::getForce(const Boid *_boid)
      typedef std::vector<Obstacle*>::const_iterator OIter;
      for (OIter it = obstacles.begin(); it != obstacles.end(); ++it)
      {
-         Obstacle* obstacle = (*it);
-         ngl::Vec4 v = _boid->getPosition() - obstacle->getPosition();
-         if (v.length() < obstacle->getBoundingRadius()  + _boid->getObstacleLookupDistance())
+         Obstacle* other = (*it);
+
+         ngl::Vec4 v = _boid->getPosition() - other->getPosition();
+         ngl::Real dist = v.length();
+         if (dist < other->getBoundingRadius()  + _boid->getObstacleLookupDistance())
          {
-             ngl::Vec4 target = obstacle->getPosition();
-             if (v.length() > obstacle->getBoundingRadius())
+             if (dist < utils::C_ERR)
              {
+                 steerForce += utils::genRandPointOnSphere() * _boid->getMaxSpeed();
+             } else
+             {
+                 ngl::Real weight = std::max((ngl::Real)0, dist - other->getBoundingRadius()) / _boid->getObstacleLookupDistance();
                  v.normalize();
-                 target += v * obstacle->getBoundingRadius();
+                 steerForce += v * _boid->getMaxSpeed() * (1 - weight);
              }
-             m_flee.setTarget(target);
-             steerForce += m_flee.getForce(_boid);
          }
      }
 
@@ -372,5 +380,5 @@ ngl::Vec4 ObstacleAvoidance::getForce(const Boid *_boid)
 
 ngl::Real ObstacleAvoidance::calcWeight(const Boid *_boid, const ngl::Vec4 &_steerForce)
 {
-    return 1.0;
+    return 2.0;
 }
