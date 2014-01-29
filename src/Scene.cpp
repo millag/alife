@@ -148,7 +148,7 @@ RenderObject *createBoid(const Mesh *_mesh)
     ngl::Vec4 p = ngl::Vec4(0, 0, 0);
 
     boid->setPosition(p);
-    boid->setMass(1.0);
+    boid->setMass(2.0);
     boid->setMaxSpeed(6.0);
     boid->setMaxTurningAngle(ngl::PI / 4);
     boid->setVelocity(v);
