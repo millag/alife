@@ -77,6 +77,7 @@ const ngl::Vec4 &MovingObject::getPosition() const
 void MovingObject::setVelocity(const ngl::Vec4 &_v)
 {
     assert(_v.m_w == 0);
+
     m_velocity = _v;
     utils::truncate(m_velocity, m_maxSpeed);
 }

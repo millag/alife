@@ -1,11 +1,9 @@
 #include "Scene.h"
 
-#include "ngl/Util.h"
-
 #include "Factory.h"
 #include "Obstacle.h"
 #include "Flock.h"
-
+#include "Config.h"
 
 RenderObject* createBoid(const Mesh *_mesh);
 RenderObject* createObstacle(const Mesh* _mesh);
@@ -45,9 +43,11 @@ Scene::~Scene()
 void Scene::initialize()
 {
 //    initialize scene bounding volume
-    m_boundingVolume.reshape(ngl::Vec4(-30, -30, -30), ngl::Vec4(30, 30, 30));
+    ngl::Real size = config::sceneBoundingBoxSize / 2;
+    m_boundingVolume.reshape(ngl::Vec4(-size, -size, -size), ngl::Vec4(size, size, size));
+
 //    initialize space partition grid
-    m_grid = new Grid(m_boundingVolume.getBoundingRadius() * 2, 10);
+    m_grid = new Grid(m_boundingVolume.getBoundingRadius() * 2, config::gridDivisions);
     m_grid->initialize();
 
     RenderObjectFactory::sRegisterObject("boid", createBoid);
@@ -61,7 +61,7 @@ void Scene::initialize()
     Mesh* mesh = new BoidMesh(meshId);
     m_meshes.push_back(mesh);
 
-    unsigned nBoids = 1000;
+    unsigned nBoids = config::nInitialBoids;
     m_renderObjects.reserve(nBoids);
     addBoids(nBoids, 0);
 
@@ -70,7 +70,7 @@ void Scene::initialize()
     mesh = new ObstacleMesh(meshId);
     m_meshes.push_back(mesh);
 
-    unsigned nObstacles = 5;
+    unsigned nObstacles = config::nInitialObstacles;
     for (unsigned i = 0; i < nObstacles; ++i)
     {
         Obstacle* obstacle = (Obstacle*)RenderObjectFactory::sCreateObject("obstacle", mesh);
@@ -143,20 +143,22 @@ RenderObject *createBoid(const Mesh *_mesh)
 
     Boid* boid = new Boid(_mesh, -1);
 
-    ngl::Vec4 v = utils::genRandPointOnSphere(1.0) * utils::randf(3, 6);
-    v.m_w = 0;
     ngl::Vec4 p = ngl::Vec4(0, 0, 0);
+    ngl::Real speed = utils::randf(config::boidInitialSpeedMin, config::boidMaxSpeed);
+    ngl::Vec4 v = utils::genRandPointOnSphere(1.0) * speed;
+    v.m_w = 0;
 
     boid->setPosition(p);
-    boid->setMass(2.0);
-    boid->setMaxSpeed(6.0);
-    boid->setMaxTurningAngle(ngl::PI / 4);
     boid->setVelocity(v);
 
-    boid->setPanicDistance(3.0);
-    boid->setNeighbourhoodDistance(6.0);
-    boid->setNeighbourhoodFOV(ngl::PI);
-    boid->setObstacleLookupDistance(8.0);
+    boid->setMaxSpeed(config::boidMaxSpeed);
+    boid->setMass(config::boidMass);
+    boid->setMaxTurningAngle(config::boidMaxTurningAngle);
+
+    boid->setPanicDistance(config::boidPanicDist);
+    boid->setNeighbourhoodDistance(config::boidNeighbourhoodDist);
+    boid->setNeighbourhoodFOV(config::boidNeighbourhoodFOV);
+    boid->setObstacleLookupDistance(config::boidObstacleLookupMinDist);
 
     boidCnt++;
 

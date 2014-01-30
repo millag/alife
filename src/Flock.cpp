@@ -5,6 +5,8 @@
 
 #include "Grid.h"
 #include "Integrator.h"
+#include "Servant.h"
+#include "Config.h"
 
 class Callable : public INeighboursServant, public IObstacleServant
 {
@@ -12,14 +14,14 @@ class Callable : public INeighboursServant, public IObstacleServant
 public:
     typedef std::vector<Boid*>::const_iterator BIter;
 
-    Callable(Flock* _flock, BIter _begin, BIter _end, ngl::Real _deltaT):
+    Callable(const Flock* _flock, BIter _begin, BIter _end, ngl::Real _deltaT):
         m_flock(_flock), m_begin(_begin), m_end(_end),m_deltaT(_deltaT)
-    { }
+    {
+        assert(m_flock != NULL);
+    }
 
     void operator()()
     {
-        assert(m_flock != NULL);
-
         for (BIter it = m_begin; it != m_end; ++it)
         {
             Boid* boid = (*it);
@@ -56,7 +58,8 @@ public:
     }
 
 private:
-    Flock* m_flock;
+
+    const Flock* m_flock;
     BIter m_begin;
     BIter m_end;
     ngl::Real m_deltaT;
@@ -87,11 +90,11 @@ Flock::~Flock()
 void Flock::initialize()
 {
     m_rules.reserve(20);
-    m_rules.push_back( new ObstacleAvoidance(.0, 1.0) );
-    m_rules.push_back( new Separation(1.0, 0.7) );
-    m_rules.push_back( new Alignment(0.5, 0.8) );
-    m_rules.push_back( new Cohesion(0.5, 0.7) );
-    m_rules.push_back( new VolumeConstraint(m_scene.getBoundingVolume(), 0.4, 1.0) );
+    m_rules.push_back( new ObstacleAvoidance(1.0, config::obstacleAvoidanceWeight) );
+    m_rules.push_back( new Separation(1.0, config::separationWeight) );
+    m_rules.push_back( new Alignment(0.5, config::alignmentWeight) );
+    m_rules.push_back( new Cohesion(0.5, config::cohesionWeight) );
+    m_rules.push_back( new VolumeConstraint(m_scene.getBoundingVolume(), 0.4, config::volumeConstraintWeight) );
 }
 
 bool Flock::isInFlock(const Boid *_boid) const
@@ -107,7 +110,7 @@ void Flock::joinBoid(Boid *_boid)
     assert(!isInFlock(_boid));
 
     std::vector<Rule*> rules(m_rules);
-    rules.push_back(new Wander(0.4, 1.0));
+    rules.push_back(new Wander(0.4, config::wanderWeight));
     _boid->setRules(rules);
     m_boids.push_back(_boid);
 }

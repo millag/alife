@@ -1,15 +1,13 @@
 #ifndef FLOCK_H
 #define FLOCK_H
 
-#include <boost/thread.hpp>
 #include "Scene.h"
-#include "Servant.h"
 
-class Flock// : public INeighboursServant, public IObstacleServant
+class Flock
 {
 public:
     Flock(const Scene& _scene);
-    virtual ~Flock();
+    ~Flock();
 
     bool isInFlock(const Boid* _boid) const;
     void joinBoid(Boid* _boid);
