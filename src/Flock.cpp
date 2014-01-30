@@ -128,7 +128,7 @@ void Flock::update(ngl::Real _deltaT)
 
     typedef std::vector<Boid*>::const_iterator BIter;
     unsigned idx = 0;
-//    boost::thread_group group;
+    boost::thread_group group;
     for (unsigned i = 0; i < nMaxThreads; ++i)
     {
         BIter beg = m_boids.begin() + idx;
@@ -136,12 +136,22 @@ void Flock::update(ngl::Real _deltaT)
         BIter end = m_boids.begin() + idx;
 
         Callable func(this, beg, end, _deltaT);
-//        group.create_thread(func);
 
-        func();
+        if (config::useMultiThreading)
+        {
+            group.create_thread(func);
+        } else
+        {
+            func();
+        }
+
         remainder--;
     }
-//    group.join_all();
+
+    if (config::useMultiThreading)
+    {
+        group.join_all();
+    }
 
     typedef std::vector<Boid*>::const_iterator BIter;
     for (BIter it = m_boids.begin(); it != m_boids.end(); ++it)

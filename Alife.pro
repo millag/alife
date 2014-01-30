@@ -24,7 +24,10 @@ SOURCES+= src/main.cpp \
     src/Integrator.cpp \
     src/Flock.cpp \
     src/Factory.cpp \
-    src/BaseObjects.cpp
+    src/BaseObjects.cpp \
+    src/Grid.cpp \
+    src/Obstacle.cpp \
+    src/Config.cpp
 
 HEADERS+= include/OpenGLWindow.h \
     include/Scene.h \
@@ -33,7 +36,6 @@ HEADERS+= include/OpenGLWindow.h \
     include/Alife.h \
     include/Boid.h \
     include/Obstacle.h \
-    include/Transform.h \
     include/Mesh.h \
     include/Utils.h \
     include/Flock.h \
@@ -41,7 +43,9 @@ HEADERS+= include/OpenGLWindow.h \
     include/Rules.h \
     include/Factory.h \
     include/BaseObjects.h \
-    include/Servant.h
+    include/Servant.h \
+    include/Grid.h \
+    include/Config.h
 INCLUDEPATH +=./include
 
 DESTDIR=./
@@ -62,7 +66,7 @@ DEFINES +=NGL_DEBUG
 
 LIBS += -L/usr/local/lib
 # add the ngl lib
-LIBS +=  -L/$(HOME)/NGL/lib -l NGL
+LIBS +=  -L/$(HOME)/NGL/lib -lNGL -lboost_thread
 
 # now if we are under unix and not on a Mac (i.e. linux) define GLEW
 linux-*{

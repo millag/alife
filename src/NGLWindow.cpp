@@ -11,6 +11,8 @@
 #include <QMouseEvent>
 #include <QGuiApplication>
 
+#include "Config.h"
+
 //----------------------------------------------------------------------------------------------------------------------
 /// @brief the increment for x/y translation with mouse movement
 //----------------------------------------------------------------------------------------------------------------------
@@ -410,6 +412,12 @@ void NGLWindow::keyPressEvent(QKeyEvent *_event)
         {
             assert(m_scene != NULL);
             m_scene->addBoids(100, 0);
+            break;
+        }
+        case Qt::Key_T :
+        {
+            config::useMultiThreading = !config::useMultiThreading;
+            std::cout << "Switch to" << ((config::useMultiThreading)? " ":" NON-" ) << "multithreading" << std::endl;
             break;
         }
         default : break;
