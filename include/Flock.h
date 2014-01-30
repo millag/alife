@@ -1,10 +1,11 @@
 #ifndef FLOCK_H
 #define FLOCK_H
 
+#include <boost/thread.hpp>
 #include "Scene.h"
 #include "Servant.h"
 
-class Flock : public INeighboursServant, public IObstacleServant
+class Flock// : public INeighboursServant, public IObstacleServant
 {
 public:
     Flock(const Scene& _scene);
@@ -14,8 +15,9 @@ public:
     void joinBoid(Boid* _boid);
     void update(ngl::Real _deltaT);
 
-    void getNeighbours(const Boid* _boid, std::vector<Boid*>& o_neighbours);
-    void getObstacles(const Boid* _boid, std::vector<Obstacle*>& o_obstacles);
+    void findNeighbours(const Boid *_boid, std::vector<Boid *> &o_neighbours) const;
+    void findObstacles(const Boid *_boid, std::vector<Obstacle*> &o_obstacles) const;
+
 protected:
 //    reference to scene object
 //    note: this is needed to query for near by obstacles/scene bounds/ect.
@@ -25,12 +27,8 @@ protected:
 //    note: rules are created and owned by the flock itself so it must clean them up
     std::vector<Rule*> m_rules;
 
-    std::map< const Boid*, std::vector<Boid*> > m_neighboursMap;
-    std::map< const Boid*, std::vector<Obstacle*> > m_obstaclesMap;
-
     void initialize();
-    void findNeighbours(const Boid *_boid, std::vector<Boid *> &o_neighbours) const;
-    void findObstacles(const Boid *_boid, std::vector<Obstacle*> &o_obstacles) const;
+
 private:
     Flock();
 };

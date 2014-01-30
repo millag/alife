@@ -6,58 +6,65 @@
 #include "Grid.h"
 #include "Integrator.h"
 
-struct Callable
+class Callable : public INeighboursServant, public IObstacleServant
 {
-    ngl::Real m_deltaT;
-    Boid* m_boid;
-    Integrator m_integrator;
+
+public:
+    typedef std::vector<Boid*>::const_iterator BIter;
+
+    Callable(Flock* _flock, BIter _begin, BIter _end, ngl::Real _deltaT):
+        m_flock(_flock), m_begin(_begin), m_end(_end),m_deltaT(_deltaT)
+    { }
 
     void operator()()
     {
-        typedef std::vector<Rule*>::const_iterator RIter;
+        assert(m_flock != NULL);
 
-        const std::vector<Rule*>& rules = m_boid->getRules();
-        std::vector<ngl::Vec4> forces;
-        forces.reserve(rules.size());
-        for (RIter it = rules.begin(); it != rules.end(); ++it)
+        for (BIter it = m_begin; it != m_end; ++it)
         {
-            forces.push_back( (*it)->getForce(m_boid) );
+            Boid* boid = (*it);
+
+            m_neighbours.clear();
+            m_flock->findNeighbours(boid, m_neighbours);
+            m_obstacles.clear();
+            m_flock->findObstacles(boid, m_obstacles);
+
+            typedef std::vector<Rule*>::const_iterator RIter;
+            const std::vector<Rule*>& rules = boid->getRules();
+            std::vector<ngl::Vec4> forces;
+            forces.reserve(rules.size());
+            for (RIter it = rules.begin(); it != rules.end(); ++it)
+            {
+                forces.push_back( (*it)->getForce(this, boid) );
+            }
+
+            ngl::Vec4 acc = m_integrator.calculateAcceleration(boid, forces, m_deltaT);
+            boid->setAcceleration(acc);
         }
-
-        ngl::Vec4 acc = m_integrator.calculateAcceleration(m_boid, forces, m_deltaT);
-        m_boid->setAcceleration(acc);
     }
+
+    void getNeighbours(const Boid *_boid, std::vector<Boid *> &o_neighbours)
+    {
+        assert(_boid != NULL);
+        o_neighbours.insert(o_neighbours.begin(), m_neighbours.begin(), m_neighbours.end());
+    }
+
+    void getObstacles(const Boid *_boid, std::vector<Obstacle *> &o_obstacles)
+    {
+        assert(_boid != NULL);
+        o_obstacles.insert(o_obstacles.begin(), m_obstacles.begin(), m_obstacles.end());
+    }
+
+private:
+    Flock* m_flock;
+    BIter m_begin;
+    BIter m_end;
+    ngl::Real m_deltaT;
+
+    Integrator m_integrator;
+    std::vector<Boid*> m_neighbours;
+    std::vector<Obstacle*> m_obstacles;
 };
-
-//struct Callable
-//{
-//    typedef std::vector<Boid*>::const_iterator BIter;
-//    ngl::Real m_deltaT;
-//    BIter m_begin;
-//    BIter m_end;
-//    Integrator m_integrator;
-
-//    void operator()()
-//    {
-//        for (BIter it = m_begin; it != m_end; ++it)
-//        {
-//            Boid* boid = (*it);
-
-//            typedef std::vector<Rule*>::const_iterator RIter;
-
-//            const std::vector<Rule*>& rules = boid->getRules();
-//            std::vector<ngl::Vec4> forces;
-//            forces.reserve(rules.size());
-//            for (RIter it = rules.begin(); it != rules.end(); ++it)
-//            {
-//                forces.push_back( (*it)->getForce(boid) );
-//            }
-
-//            ngl::Vec4 acc = m_integrator.calculateAcceleration(boid, forces, m_deltaT);
-//            boid->setAcceleration(acc);
-//        }
-//    }
-//};
 
 
 Flock::Flock():m_scene(Scene()) { }
@@ -76,13 +83,14 @@ Flock::~Flock()
     }
 }
 
+// FIX: rules should be in boid and flock by inserted by builder
 void Flock::initialize()
 {
     m_rules.reserve(20);
-    m_rules.push_back( new ObstacleAvoidance(this, 1.0, 1.0) );
-    m_rules.push_back( new Separation(this, 1.0, 0.7) );
-    m_rules.push_back( new Alignment(this, 0.5, 0.8) );
-    m_rules.push_back( new Cohesion(this, 0.5, 0.7) );
+    m_rules.push_back( new ObstacleAvoidance(.0, 1.0) );
+    m_rules.push_back( new Separation(1.0, 0.7) );
+    m_rules.push_back( new Alignment(0.5, 0.8) );
+    m_rules.push_back( new Cohesion(0.5, 0.7) );
     m_rules.push_back( new VolumeConstraint(m_scene.getBoundingVolume(), 0.4, 1.0) );
 }
 
@@ -99,29 +107,38 @@ void Flock::joinBoid(Boid *_boid)
     assert(!isInFlock(_boid));
 
     std::vector<Rule*> rules(m_rules);
-    rules.push_back(new Wander(this, 0.4, 1.0));
+    rules.push_back(new Wander(0.4, 1.0));
     _boid->setRules(rules);
     m_boids.push_back(_boid);
 }
 
 void Flock::update(ngl::Real _deltaT)
 {
-//    boost::thread_group group;
-    typedef std::vector<Boid*>::const_iterator BIter;
-    for (BIter it = m_boids.begin(); it != m_boids.end(); ++it)
-    {
-        assert((*it) != NULL);
 
-        Callable func;
-        func.m_deltaT = _deltaT;
-        func.m_boid = (*it);
+    size_t nMaxThreads = boost::thread::hardware_concurrency();
+    nMaxThreads = std::min(m_boids.size(), nMaxThreads);
+//    std::cout << "Max threads: " << nMaxThreads << std::endl;
+
+    unsigned nCnt = m_boids.size() / nMaxThreads;
+    int remainder = m_boids.size() % nMaxThreads;
+//    std::cout << "boids per thread: " << nCnt << " , Reminder: " << reminder << std::endl;
+
+    typedef std::vector<Boid*>::const_iterator BIter;
+    unsigned idx = 0;
+//    boost::thread_group group;
+    for (unsigned i = 0; i < nMaxThreads; ++i)
+    {
+        BIter beg = m_boids.begin() + idx;
+        idx += nCnt + (((remainder) > 0)? 1 : 0);
+        BIter end = m_boids.begin() + idx;
+
+        Callable func(this, beg, end, _deltaT);
 //        group.create_thread(func);
+
         func();
+        remainder--;
     }
 //    group.join_all();
-
-    m_neighboursMap.clear();
-    m_obstaclesMap.clear();
 
     typedef std::vector<Boid*>::const_iterator BIter;
     for (BIter it = m_boids.begin(); it != m_boids.end(); ++it)
@@ -130,64 +147,7 @@ void Flock::update(ngl::Real _deltaT)
     }
 }
 
-
-//void Flock::update(ngl::Real _deltaT)
-//{
-//    m_neighboursMap.clear();
-//    m_obstaclesMap.clear();
-
-//    size_t nMaxThreads = boost::thread::hardware_concurrency();
-//    nMaxThreads = std::min(m_boids.size(), nMaxThreads);
-//    std::cout << "Max threads: " << nMaxThreads << std::endl;
-
-//    unsigned nCnt = m_boids.size() / nMaxThreads;
-//    int reminder = m_boids.size() % nMaxThreads;
-//    std::cout << "boids per thread: " << nCnt << " , Reminder: " << reminder << std::endl;
-
-//    unsigned idx = 0;
-//    boost::thread_group group;
-//    for (unsigned i = 0; i < nMaxThreads; ++i)
-//    {
-//        Callable func;
-//        func.m_deltaT = _deltaT;
-//        func.m_begin = m_boids.begin() + idx;
-//        idx += nCnt + (((reminder) > 0)? 1 : 0);
-//        reminder--;
-//        func.m_end = m_boids.begin() + idx;
-//        group.create_thread(func);
-//    }
-//    group.join_all();
-
-//    typedef std::vector<Boid*>::const_iterator BIter;
-//    for (BIter it = m_boids.begin(); it != m_boids.end(); ++it)
-//    {
-//        (*it)->update(_deltaT);
-//    }
-//}
-
-void Flock::getNeighbours(const Boid *_boid, std::vector<Boid *> &o_neighbours)
-{
-    assert(_boid != NULL);
-    if (m_neighboursMap.count(_boid) == 0)
-    {
-        findNeighbours(_boid, m_neighboursMap[_boid]);
-    }
-    o_neighbours.insert(o_neighbours.begin(), m_neighboursMap[_boid].begin(), m_neighboursMap[_boid].end());
-//    findNeighbours(_boid, o_neighbours);
-}
-
-void Flock::getObstacles(const Boid *_boid, std::vector<Obstacle *> &o_obstacles)
-{
-    assert(_boid != NULL);
-    if (m_obstaclesMap.count(_boid) == 0)
-    {
-        findObstacles(_boid, m_obstaclesMap[_boid]);
-    }
-    o_obstacles.insert(o_obstacles.begin(), m_obstaclesMap[_boid].begin(), m_obstaclesMap[_boid].end());
-//    findObstacles(_boid, o_obstacles);
-}
-
-// grid used
+// with grid
 void Flock::findNeighbours(const Boid *_boid, std::vector<Boid *> &o_neighbours) const
 {
     assert(_boid != NULL);
@@ -221,34 +181,3 @@ void Flock::findObstacles(const Boid *_boid, std::vector<Obstacle*> &o_obstacles
         }
     }
 }
-
-
-//void Flock::update(ngl::Real _deltaT)
-//{
-//    typedef std::vector<Boid*>::iterator BIter;
-//    for (BIter it = m_boids.begin(); it != m_boids.end(); ++it)
-//    {
-//        Boid* boid = (*it);
-
-//        typedef std::vector<Rule*>::const_iterator RIter;
-
-//        const std::vector<Rule*>& rules = boid->getRules();
-//        std::vector<ngl::Vec4> forces;
-//        forces.reserve(rules.size());
-//        for (RIter it = rules.begin(); it != rules.end(); ++it)
-//        {
-//            forces.push_back( (*it)->getForce(boid) );
-//        }
-
-//        ngl::Vec4 acc = Integrator::sGetInstance().calculateAcceleration(boid, forces, _deltaT);
-//        boid->setAcceleration(acc);
-//    }
-
-//    m_neighboursMap.clear();
-//    m_obstaclesMap.clear();
-
-//    for (BIter it = m_boids.begin(); it != m_boids.end(); ++it)
-//    {
-//        (*it)->update(_deltaT);
-//    }
-//}

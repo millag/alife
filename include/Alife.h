@@ -21,14 +21,12 @@ signals:
     
 public slots:
     void update();
-    void refresh();
 
 private:
     Scene* m_scene;
     NGLWindow* m_window;
 
     QTimer m_updateTimer;
-    QTimer m_refreshTimer;
     QElapsedTimer m_chronometer;
 };
 

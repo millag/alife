@@ -34,8 +34,6 @@ void Alife::initialize()
     std::cout<<"Profile is "<<format.majorVersion()<<" "<<format.minorVersion()<<"\n";
 
     connect(&m_updateTimer, SIGNAL(timeout()), this, SLOT(update()));
-    connect(&m_refreshTimer, SIGNAL(timeout()), this, SLOT(refresh()));
-
 }
 
 void Alife::go()
@@ -45,19 +43,14 @@ void Alife::go()
     // and finally show
     m_window->show();
     m_updateTimer.start(utils::C_UPDATERATE);
-    m_refreshTimer.start(utils::C_REFRESHRATE);
     m_chronometer.start();
 }
 
 void Alife::update()
 {
-    std::cout << "UPS: " << utils::C_SEC / m_chronometer.elapsed() << std::endl;
+    std::cout << "FPS: " << utils::C_SEC / m_chronometer.elapsed() << std::endl;
     ngl::Real deltaT = (float)m_chronometer.restart() / utils::C_SEC;
     m_scene->update(deltaT);
-}
-
-void Alife::refresh()
-{
     // re-draw GL
     m_window->renderLater();
 }

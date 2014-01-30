@@ -17,7 +17,7 @@ void Rule::setWeight(ngl::Real _w)
 
 
 
-ngl::Vec4 Seek::getForce(const Boid *_boid)
+ngl::Vec4 Seek::getForce(IServant *_servant, const Boid *_boid)
 {
     ngl::Vec4 steerForce = m_target - _boid->getPosition();
     steerForce.m_w = 0;
@@ -38,7 +38,11 @@ ngl::Real Seek::calcWeight(const Boid *_boid, const ngl::Vec4 &_steerForce)
     return _steerForce.length() / _boid->getPanicDistance();
 }
 
-ngl::Vec4 Flee::getForce(const Boid *_boid)
+
+
+
+
+ngl::Vec4 Flee::getForce(IServant *_servant, const Boid *_boid)
 {
     ngl::Vec4 steerForce = _boid->getPosition() - m_target;
     steerForce.m_w = 0;
@@ -65,16 +69,15 @@ ngl::Real Flee::calcWeight(const Boid *_boid, const ngl::Vec4 &_steerForce)
 
 
 
-INeighboursServant &Separation::getServant() const
-{
-    return *(dynamic_cast<INeighboursServant*>(m_servant));
-}
 
 
-ngl::Vec4 Separation::getForce(const Boid *_boid)
+ngl::Vec4 Separation::getForce(IServant *_servant, const Boid *_boid)
 {
+    INeighboursServant* servant = dynamic_cast<INeighboursServant*>(_servant);
+    assert(servant != NULL);
+
     std::vector<Boid*> neighbours;
-    getServant().getNeighbours(_boid, neighbours);
+    servant->getNeighbours(_boid, neighbours);
 
     ngl::Vec4 steerForce(0,0,0,0);
 
@@ -109,15 +112,17 @@ ngl::Real Separation::calcWeight(const Boid *_boid, const ngl::Vec4 &_steerForce
 
 
 
-INeighboursServant& Alignment::getServant() const
-{
-    return *(dynamic_cast<INeighboursServant*>(m_servant));
-}
 
-ngl::Vec4 Alignment::getForce(const Boid *_boid)
+
+
+
+ngl::Vec4 Alignment::getForce(IServant* _servant, const Boid *_boid)
 {
+    INeighboursServant* servant = dynamic_cast<INeighboursServant*>(_servant);
+    assert(servant != NULL);
+
     std::vector<Boid*> neighbours;
-    getServant().getNeighbours(_boid, neighbours);
+    servant->getNeighbours(_boid, neighbours);
 
     ngl::Vec4 steerForce(0,0,0,0);
 
@@ -145,15 +150,13 @@ ngl::Real Alignment::calcWeight(const Boid *_boid, const ngl::Vec4 &_steerForce)
 
 
 
-INeighboursServant &Cohesion::getServant() const
+ngl::Vec4 Cohesion::getForce(IServant *_servant, const Boid *_boid)
 {
-    return *(dynamic_cast<INeighboursServant*>(m_servant));
-}
+    INeighboursServant* servant = dynamic_cast<INeighboursServant*>(_servant);
+    assert(servant != NULL);
 
-ngl::Vec4 Cohesion::getForce(const Boid *_boid)
-{
     std::vector<Boid*> neighbours;
-    getServant().getNeighbours(_boid, neighbours);
+    servant->getNeighbours(_boid, neighbours);
 
     ngl::Vec4 steerForce(0,0,0,0);
     ngl::Vec4 massCenter(0,0,0,1);
@@ -166,8 +169,8 @@ ngl::Vec4 Cohesion::getForce(const Boid *_boid)
     if (neighbours.size())
     {
         massCenter /= neighbours.size();
-        m_seek.setTarget(massCenter);
-        steerForce += m_seek.getForce(_boid);
+        Seek seek(massCenter);
+        steerForce += seek.getForce(_servant, _boid);
     }
 
     return  steerForce * calcWeight(_boid, steerForce)* m_weight;
@@ -181,34 +184,55 @@ ngl::Real Cohesion::calcWeight(const Boid *_boid, const ngl::Vec4 &_steerForce)
 
 
 
-ngl::Vec4 VolumeConstraint::getForce(const Boid *_boid)
+ngl::Vec4 VolumeConstraint::getForce(IServant* _servant, const Boid *_boid)
 {
     ngl::Vec4 steerForce(0,0,0,0);
     if (!utils::isInsideVolume(_boid->getPosition(), m_volume))
     {
-        m_seek.setTarget(m_volume.getCenter());
-        steerForce += m_seek.getForce(_boid);
+        Seek seek(m_volume.getCenter());
+        steerForce += seek.getForce(_servant, _boid);
         utils::truncate(steerForce, _boid->getMaxSpeed());
         return  steerForce * calcWeight(_boid, steerForce) * m_weight;
     }
 
-    m_flee.setTarget(ngl::Vec4(m_volume.getBottomLeft().m_x, _boid->getPosition().m_y, _boid->getPosition().m_z));
-    steerForce += m_flee.getForce(_boid);
+//    Flee flee(ngl::Vec4());
+//    flee.setTarget(ngl::Vec4(m_volume.getBottomLeft().m_x, _boid->getPosition().m_y, _boid->getPosition().m_z));
+//    steerForce += flee.getForce(_boid);
+    ngl::Vec4 target;
+    target = ngl::Vec4(m_volume.getBottomLeft().m_x, _boid->getPosition().m_y, _boid->getPosition().m_z);
+    Flee flee1(target);
+    steerForce += flee1.getForce(_servant, _boid);
 
-    m_flee.setTarget(ngl::Vec4(_boid->getPosition().m_x, m_volume.getBottomLeft().m_y, _boid->getPosition().m_z));
-    steerForce += m_flee.getForce(_boid);
+//    flee.setTarget(ngl::Vec4(_boid->getPosition().m_x, m_volume.getBottomLeft().m_y, _boid->getPosition().m_z));
+//    steerForce += flee.getForce(_boid);
+    target = ngl::Vec4(_boid->getPosition().m_x, m_volume.getBottomLeft().m_y, _boid->getPosition().m_z);
+    Flee flee2(target);
+    steerForce += flee2.getForce(_servant, _boid);
 
-    m_flee.setTarget(ngl::Vec4(_boid->getPosition().m_x, _boid->getPosition().m_y, m_volume.getBottomLeft().m_z));
-    steerForce += m_flee.getForce(_boid);
 
-    m_flee.setTarget(ngl::Vec4(m_volume.getTopRight().m_x, _boid->getPosition().m_y, _boid->getPosition().m_z));
-    steerForce += m_flee.getForce(_boid);
+//    flee.setTarget(ngl::Vec4(_boid->getPosition().m_x, _boid->getPosition().m_y, m_volume.getBottomLeft().m_z));
+//    steerForce += flee.getForce(_boid);
+    target = ngl::Vec4(_boid->getPosition().m_x, _boid->getPosition().m_y, m_volume.getBottomLeft().m_z);
+    Flee flee3(target);
+    steerForce += flee3.getForce(_servant, _boid);
 
-    m_flee.setTarget(ngl::Vec4(_boid->getPosition().m_x, m_volume.getTopRight().m_y, _boid->getPosition().m_z));
-    steerForce += m_flee.getForce(_boid);
+//    flee.setTarget(ngl::Vec4(m_volume.getTopRight().m_x, _boid->getPosition().m_y, _boid->getPosition().m_z));
+//    steerForce += flee.getForce(_boid);
+    target = ngl::Vec4(m_volume.getTopRight().m_x, _boid->getPosition().m_y, _boid->getPosition().m_z);
+    Flee flee4(target);
+    steerForce += flee4.getForce(_servant, _boid);
 
-    m_flee.setTarget(ngl::Vec4(_boid->getPosition().m_x, _boid->getPosition().m_y, m_volume.getTopRight().m_z));
-    steerForce += m_flee.getForce(_boid);
+//    flee.setTarget(ngl::Vec4(_boid->getPosition().m_x, m_volume.getTopRight().m_y, _boid->getPosition().m_z));
+//    steerForce += flee.getForce(_boid);
+    target = ngl::Vec4(_boid->getPosition().m_x, m_volume.getTopRight().m_y, _boid->getPosition().m_z);
+    Flee flee5(target);
+    steerForce += flee5.getForce(_servant, _boid);
+
+//    flee.setTarget(ngl::Vec4(_boid->getPosition().m_x, _boid->getPosition().m_y, m_volume.getTopRight().m_z));
+//    steerForce += flee.getForce(_boid);
+    target = ngl::Vec4(_boid->getPosition().m_x, _boid->getPosition().m_y, m_volume.getTopRight().m_z);
+    Flee flee6(target);
+    steerForce += flee6.getForce(_servant, _boid);
 
     utils::truncate(steerForce, _boid->getMaxSpeed());
     return  steerForce * calcWeight(_boid, steerForce) * m_weight;
@@ -220,22 +244,25 @@ ngl::Real VolumeConstraint::calcWeight(const Boid *_boid, const ngl::Vec4 &_stee
 }
 
 
-Wander::Wander(INeighboursServant *_servant, ngl::Real _priority, ngl::Real _weight, ngl::Real _wanderDist, ngl::Real _wanderRadius, ngl::Real _jitterAngle):
-                Rule(_servant, _priority, _weight), m_wanderDist(_wanderDist), m_wanderRadius(_wanderRadius),m_jitterAngle(_jitterAngle)
+
+
+
+
+
+Wander::Wander(ngl::Real _priority, ngl::Real _weight, ngl::Real _wanderDist, ngl::Real _wanderRadius, ngl::Real _jitterAngle):
+                Rule(_priority, _weight), m_wanderDist(_wanderDist), m_wanderRadius(_wanderRadius),m_jitterAngle(_jitterAngle)
 {
     m_target = utils::genRandPointOnSphere();
     m_target.m_w = 0;
 }
 
-INeighboursServant &Wander::getServant() const
+ngl::Vec4 Wander::getForce(IServant *_servant, const Boid *_boid)
 {
-    return *(dynamic_cast<INeighboursServant*>(m_servant));
-}
+    INeighboursServant* servant = dynamic_cast<INeighboursServant*>(_servant);
+    assert(servant != NULL);
 
-ngl::Vec4 Wander::getForce(const Boid *_boid)
-{
     std::vector<Boid*> neighbours;
-    getServant().getNeighbours(_boid, neighbours);
+    servant->getNeighbours(_boid, neighbours);
 
     ngl::Vec4 steerForce(0,0,0,0);
 
@@ -266,18 +293,17 @@ ngl::Real Wander::calcWeight(const Boid *_boid, const ngl::Vec4 &_steerForce)
 }
 
 
-IObstacleServant &ObstacleAvoidance::getServant() const
-{
-    return *(dynamic_cast<IObstacleServant*>(m_servant));
-}
-
-ngl::Vec4 ObstacleAvoidance::getForce(const Boid *_boid)
+ngl::Vec4 ObstacleAvoidance::getForce(IServant* _servant, const Boid *_boid)
 {
     assert(_boid != NULL);
     ngl::Vec4 steerForce(0,0,0,0);
 
+    IObstacleServant* servant = dynamic_cast<IObstacleServant*>(_servant);
+    assert(servant != NULL);
+
     std::vector<Obstacle *> obstacles;
-    getServant().getObstacles(_boid, obstacles);
+    servant->getObstacles(_boid, obstacles);
+
     if (!obstacles.size())
     {
         return steerForce;
@@ -306,6 +332,12 @@ ngl::Vec4 ObstacleAvoidance::getForce(const Boid *_boid)
 
      utils::truncate(steerForce, _boid->getMaxSpeed());
      return steerForce * calcWeight(_boid, steerForce) * m_weight;
+}
+
+
+ngl::Real ObstacleAvoidance::calcWeight(const Boid *_boid, const ngl::Vec4 &_steerForce)
+{
+    return 2.0;
 }
 
 //ngl::Vec4 ObstacleAvoidance::getForce(const Boid *_boid)
@@ -377,8 +409,3 @@ ngl::Vec4 ObstacleAvoidance::getForce(const Boid *_boid)
 //    ngl::Real distWeight = ( 1  - v.length() / _boid->getObstacleLookupDistance());
 //    return  steerForce * distWeight * m_weight;
 //}
-
-ngl::Real ObstacleAvoidance::calcWeight(const Boid *_boid, const ngl::Vec4 &_steerForce)
-{
-    return 2.0;
-}

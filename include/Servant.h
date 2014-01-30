@@ -10,14 +10,14 @@ public:
     virtual ~IServant() { }
 };
 
-class INeighboursServant : public IServant
+class INeighboursServant : virtual public IServant
 {
 public:
     virtual ~INeighboursServant() { }
     virtual void getNeighbours(const Boid* _boid, std::vector<Boid*>& o_neighbours) = 0;
 };
 
-class IObstacleServant : public IServant
+class IObstacleServant : virtual public IServant
 {
 public:
     virtual ~IObstacleServant() { }
