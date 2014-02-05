@@ -29,7 +29,7 @@ namespace config
     const ngl::Real volumeConstraintWeight = 1.0;
     const ngl::Real wanderWeight = 1.0;
 
-    extern bool useMultiThreading;
+    extern bool g_useMultiThreading;
 }
 
 #endif // CONFIG_H

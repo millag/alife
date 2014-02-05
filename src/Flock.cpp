@@ -137,7 +137,7 @@ void Flock::update(ngl::Real _deltaT)
 
         Callable func(this, beg, end, _deltaT);
 
-        if (config::useMultiThreading)
+        if (config::g_useMultiThreading)
         {
             group.create_thread(func);
         } else
@@ -148,7 +148,7 @@ void Flock::update(ngl::Real _deltaT)
         remainder--;
     }
 
-    if (config::useMultiThreading)
+    if (config::g_useMultiThreading)
     {
         group.join_all();
     }

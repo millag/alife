@@ -1,3 +1,3 @@
 #include "Config.h"
 
-bool config::useMultiThreading = false;
+bool config::g_useMultiThreading = false;

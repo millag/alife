@@ -416,8 +416,8 @@ void NGLWindow::keyPressEvent(QKeyEvent *_event)
         }
         case Qt::Key_T :
         {
-            config::useMultiThreading = !config::useMultiThreading;
-            std::cout << "Switch to" << ((config::useMultiThreading)? " ":" NON-" ) << "multithreading" << std::endl;
+            config::g_useMultiThreading = !config::g_useMultiThreading;
+            std::cout << "Switch to" << ((config::g_useMultiThreading)? " ":" NON-" ) << "multithreading" << std::endl;
             break;
         }
         default : break;
